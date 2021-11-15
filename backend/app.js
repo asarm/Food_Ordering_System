@@ -53,7 +53,7 @@ app.post('/api/register', function (request, res) {
     coordinates = getCoordinates(address.replace(" ", "+"))
     console.log(coordinates)
 
-    var sql = "INSERT INTO users (username, fullname, address, email UNIQUE, type) VALUES ?";
+    var sql = "INSERT INTO users (username, fullname, address, email, type) VALUES ?";
     var values = [
         [username, fullname, address, email, type],
     ];
