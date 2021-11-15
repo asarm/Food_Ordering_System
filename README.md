@@ -18,6 +18,6 @@ type 0 = user
 DBye üye eklemek (kayıt olmak için)
 (POST) http://localhost:8080/api/register?username=arda&fullname=mert+arda+asar&address=mef+university&email=asarm@mef.edu.tr&type=1
 
-2 farklı yanıt döndürebilir:
+Şuan 2 farklı yanıt döndürebilir gerektikçe bu yanıtları çoğaltırız:
 200 -> OK
 1062 -> User(row) already exist
