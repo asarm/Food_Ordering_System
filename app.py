@@ -12,6 +12,25 @@ with sqlite3.connect(DATABASE) as database:
                    " lat REAL , lng REAL, registred_date Date DEFAULT (datetime('now','localtime')))")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS couriers(courier_id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng REAL)")
+    
+    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id int PRIMARY KEY,content TEXT,orderDate datetime,userUserName varchar(30),courierID int)")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS menuItem(id int PRIMARY KEY,ingridients varchar(200))")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS needs(menuItemId int,orderId int,menuId int,PRIMARY KEY(menuItemID, orderId, menuId))")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId int,menuId int,PRIMARY KEY(orderId,menuId))")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id int PRIMARY KEY,menuName varchar(30),restaurantId int)")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id int PRIMARY KEY,restaurantName varchar(30),address varchar(250),isOpen binary,averageRating real)")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id int PRIMARY KEY,restaurantName varchar(30),address varchar(250),isOpen binary,averageRating real)")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS review(id int PRIMARY KEY,rating int,reviewDate datetime,restaurantId int,userUserName varchar(30))")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS has(menuId int,menuitemId int,PRIMARY KEY(menuId, menuitemId))")
+
 
 @app.route("/", methods=["GET","POST"])
 def loginView():
