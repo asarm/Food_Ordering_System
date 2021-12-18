@@ -8,28 +8,44 @@ app.secret_key = "super secret key"
 DATABASE = 'system_db.db'
 with sqlite3.connect(DATABASE) as database:
     cursor = database.cursor()
+
     cursor.execute("CREATE TABLE IF NOT EXISTS users(username TEXT PRIMARY KEY,email TEXT,password TEXT,user_type INTEGER, address Text,"
                    " lat REAL , lng REAL, registred_date Date DEFAULT (datetime('now','localtime')))")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS couriers(courier_id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng REAL)")
-    
-    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id int PRIMARY KEY,content TEXT,orderDate datetime,userUserName varchar(30),courierID int)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS couriers(id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng)")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id int PRIMARY KEY,content TEXT,orderDate datetime)")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS menuItem(id int PRIMARY KEY,ingridients varchar(200))")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS needs(menuItemId int,orderId int,menuId int,PRIMARY KEY(menuItemID, orderId, menuId))")
-
-    cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId int,menuId int,PRIMARY KEY(orderId,menuId))")
-
-    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id int PRIMARY KEY,menuName varchar(30),restaurantId int)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id int PRIMARY KEY,menuName varchar(30))")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id int PRIMARY KEY,restaurantName varchar(30),address varchar(250),isOpen binary,averageRating real)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id int PRIMARY KEY,restaurantName varchar(30),address varchar(250),isOpen binary,averageRating real)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS review(id int PRIMARY KEY,rating int,reviewDate datetime)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS review(id int PRIMARY KEY,rating int,reviewDate datetime,restaurantId int,userUserName varchar(30))")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS has(menuId int,menuitemId int,PRIMARY KEY(menuId, menuitemId))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId int,menuId int,PRIMARY KEY(orderId,menuId),"
+                   "FOREIGN KEY (orderId) REFERENCES foodOrder(id),FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE)")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS has(menuId int,menuitemId int,PRIMARY KEY(menuId, menuItemId),"
+                   "FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE,"
+                   "FOREIGN KEY (menuitemId) REFERENCES menuItem(id) ON UPDATE CASCADE)")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS needs(menuItemId int,orderId int,menuId int,PRIMARY KEY(menuItemID, orderId, menuId),"
+                    "FOREIGN KEY (menuItemId) REFERENCES menuItem(id) ON UPDATE CASCADE,"
+                   "FOREIGN KEY (orderId) REFERENCES menu(id),FOREIGN KEY (menuId) REFERENCES consistsof(menuId) ON UPDATE CASCADE)")
+    try: ##Without try-catch, throws a duplicate error. 
+        ## Foreign keys
+        script = ("ALTER TABLE foodOrder ADD COLUMN courierID int REFERENCES couriers(id) ON UPDATE CASCADE;"
+              "ALTER TABLE foodOrder ADD COLUMN userUserName varchar(30) REFERENCES users(username) ON UPDATE CASCADE;"
+              "ALTER TABLE couriers ADD COLUMN orderId int REFERENCES foodOrder(id) ON UPDATE CASCADE;"
+              "ALTER TABLE review ADD COLUMN restaurantId int REFERENCES restaurant(id) ON UPDATE CASCADE;"
+              "ALTER TABLE review ADD COLUMN userUserName int REFERENCES users(username) ON UPDATE CASCADE;"
+              "ALTER TABLE menu ADD COLUMN restaurantId int REFERENCES restaurant(id) ON UPDATE CASCADE;")
+        cursor.executescript(script)
+    except:
+        pass
 
 
 @app.route("/", methods=["GET","POST"])
