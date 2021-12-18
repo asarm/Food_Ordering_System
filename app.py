@@ -151,6 +151,45 @@ def addCourier():
 
     return render_template('addCourier.html')
 
+@app.route("/addRestaurant", methods=["GET", "POST"])
+def addRestaurant():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        name = request.form["name"]
+        address = request.form["address"]
+        coordinates = searchCoordinates(address)
+        lat, lng = coordinates[0], coordinates[1]
+
+        cursor.execute("INSERT INTO restaurants(name, address, lat, lng, isOpen) VALUES(?, ?, ?, ?, ?)",
+                       (name, address, lat, lng, 1))
+        database.commit()
+        return redirect(url_for("homeView", title="Login"))
+
+    return render_template('addRestaurant.html')
+
+@app.route("/addUser", methods=["GET", "POST"])
+def addUser():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+        address = request.form["address"]
+        coordinates = searchCoordinates(address)
+        lat, lng = coordinates[0], coordinates[1]
+
+        cursor.execute("INSERT INTO users(username,email,password,user_type, address, lat, lng) VALUES(?,?,?,?,?,?,?)",
+                       (username, email, password, 0, address, lat, lng))
+        database.commit()
+        return redirect(url_for("loginView", title="Login"))
+
+    return render_template('addUser.html', title='Register')
+
+
 @app.route("/exit", methods=["GET"])
 def exit():
     session["username"] = None
