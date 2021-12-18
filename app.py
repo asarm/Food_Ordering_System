@@ -6,6 +6,7 @@ app = Flask(__name__)
 app.secret_key = "super secret key"
 
 DATABASE = 'system_db.db'
+
 with sqlite3.connect(DATABASE) as database:
     cursor = database.cursor()
 
@@ -20,7 +21,7 @@ with sqlite3.connect(DATABASE) as database:
 
     cursor.execute("CREATE TABLE IF NOT EXISTS menu(id int PRIMARY KEY,menuName varchar(30))")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id int PRIMARY KEY,restaurantName varchar(30),address varchar(250),isOpen binary,averageRating real)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id int PRIMARY KEY,restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating real)")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS review(id int PRIMARY KEY,rating int,reviewDate datetime)")
 
@@ -162,8 +163,8 @@ def addRestaurant():
         coordinates = searchCoordinates(address)
         lat, lng = coordinates[0], coordinates[1]
 
-        cursor.execute("INSERT INTO restaurants(name, address, lat, lng, isOpen) VALUES(?, ?, ?, ?, ?)",
-                       (name, address, lat, lng, 1))
+        cursor.execute("INSERT INTO restaurant(restaurantName, address, lat, lng, isOpen, averageRating) VALUES(?, ?, ?, ?, ?,?)",
+                       (name, address, lat, lng, 1, 0))
         database.commit()
         return redirect(url_for("homeView", title="Login"))
 
