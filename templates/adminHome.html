@@ -18,23 +18,163 @@
 {% block body %}
  <center>
  <div class="row mt-3">
-     <div class="col-md-6">
+     <div class="col-md-6" style="z-index: 0;">
          <ul class="list-group">
-          <li class="list-group-item active">Recent Orders <button class="btn btn-sm btn-success">See All</button> </li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
+          <li class="list-group-item active">Recent Orders <button class="btn btn-sm btn-success" id="See All Orders" data-toggle="modal" data-target="#OrderModal">See All</button> 
+            <div id="OrderModal" class="modal">
+              <div class="modal-dialog">
+                <div class="modal-content">
+            
+                  <!-- Modal Header -->
+                  <div class="modal-header">
+                    <h4 class="modal-title">Modal Heading</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  </div>
+            
+                  <!-- Modal body -->
+                  <div class="modal-body">
+                      <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Firstname</th>
+                    <th>Lastname</th>
+                    <th>Email</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>John</td>
+                    <td>Doe</td>
+                    <td>john@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>Mary</td>
+                    <td>Moe</td>
+                    <td>mary@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>July</td>
+                    <td>Dooley</td>
+                    <td>july@example.com</td>
+                  </tr>
+                </tbody>
+              </table>
+              </div>
+            
+                  <!-- Modal footer -->
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                  </div>
+            
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="list-group-item">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Username</th>
+                  <th scope="col">Restaurant</th>
+                  <th scope="col">Order</th>
+                  <th scope="col">Courier Number</th>
+                  <th scope="col">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">1</th>
+                  <td>First Username</td>
+                  <td>First Restaurant</td>
+                  <td>First Order</td>
+                  <td>First Courier Number</td>
+                  <td>First Date</td>
+                </tr>
+                <tr>
+                  <th scope="row">2</th>
+                  <td>Second Username</td>
+                  <td>Second Restaurant</td>
+                  <td>Second Order</td>
+                  <td>Second Courier Number</td>
+                  <td>Second Date</td>
+                </tr>
+                <tr>
+                  <th scope="row">3</th>
+                  <td>Third Username</td>
+                  <td>Third Restaurant</td>
+                  <td>Third Order</td>
+                  <td>Third Courier Number</td>
+                  <td>Third Date</td>
+                </tr>
+                <tr>
+                  <th scope="row">4</th>
+                  <td>Fourth Username</td>
+                  <td>Fourth Restaurant</td>
+                  <td>Fourth Order</td>
+                  <td>Fourth Courier Number</td>
+                  <td>Fourth Date</td>
+                </tr>
+              </tbody>
+            </table>
+          </li>
         </ul>
      </div>
-     <div class="col-md-6">
+     <div class="col-md-6" style="z-index: 0;">
          <ul class="list-group">
-          <li class="list-group-item active">Last Registered Users <button class="btn btn-sm btn-success">See All</button>
+          <li class="list-group-item active" >Last Registered Users <button class="btn btn-sm btn-success" id="See All Users">See All</button>
+            <div id="UserModal" class="modal">
+              <!-- Modal content -->
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <p style="color: black;">Some text in the Modal..</p>
+              </div>
+            </div>
+            
             <a href="/addUser" class="btn btn-sm btn-warning">Add New</a></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
+          <li class="list-group-item">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Username</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Register Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">1</th>
+                  <td>First Username</td>
+                  <td>First Email</td>
+                  <td>First Address</td>
+                  <td>First Register Date</td>
+                </tr>
+                <tr>
+                  <th scope="row">2</th>
+                  <td>Second Username</td>
+                  <td>Second Email</td>
+                  <td>Second Address</td>
+                  <td>Second Register Date</td>
+                </tr>
+                <tr>
+                  <th scope="row">3</th>
+                  <td>Third Username</td>
+                  <td>Third Email</td>
+                  <td>Third Address</td>
+                  <td>Third Register Date</td>
+                </tr>
+                <tr>
+                  <th scope="row">4</th>
+                  <td>Fourth Username</td>
+                  <td>Fourth Email</td>
+                  <td>Fourth Address</td>
+                  <td>Fourth Register Date</td>
+                </tr>
+              </tbody>
+            </table>
+          </li>
         </ul>
      </div>
  </div>
@@ -42,27 +182,315 @@
 
     <center>
  <div class="row mt-3">
-     <div class="col-md-6">
+     <div class="col-md-6" style="z-index: 0;">
          <ul class="list-group">
-          <li class="list-group-item active">Restaurants <button class="btn btn-sm btn-success">See All</button>
+          <li class="list-group-item active">Restaurants <button class="btn btn-sm btn-success" id="See All Restaurants">See All</button>
+            <div id="RestaurantModal" class="modal">
+              <!-- Modal content -->
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <p style="color: black;">Some text in the Modal..</p>
+              </div>
+            </div>
             <a href="/addRestaurant" class="btn btn-sm btn-warning">Add New</a></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
+          <li class="list-group-item">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Open Status</th>
+                  <th scope="col">Average Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">1</th>
+                  <td>First Name</td>
+                  <td>First Address</td>
+                  <td>First Open Status</td>
+                  <td>First Average Rating</td>
+                </tr>
+                <tr>
+                  <th scope="row">2</th>
+                  <td>Second Name</td>
+                  <td>Second Address</td>
+                  <td>Second Open Status</td>
+                  <td>Second Average Rating</td>
+                </tr>
+                <tr>
+                  <th scope="row">3</th>
+                  <td>Third Name</td>
+                  <td>Third Address</td>
+                  <td>Third Open Status</td>
+                  <td>Third Average Rating</td>
+                </tr>
+                <tr>
+                  <th scope="row">4</th>
+                  <td>Fourth Name</td>
+                  <td>Fourth Address</td>
+                  <td>Fourth Open Status</td>
+                  <td>Fourth Average Rating</td>
+                </tr>
+              </tbody>
+            </table>
+          </li>
         </ul>
      </div>
-     <div class="col-md-6">
+     <div class="col-md-6" style="z-index: 0;">
          <ul class="list-group">
-          <li class="list-group-item active">Couriers <button class="btn btn-sm btn-success">See All</button>
+          <li class="list-group-item active">Couriers <button class="btn btn-sm btn-success" id="See All Couriers">See All</button>
+            <div id="CourierModal" class="modal">
+              <!-- Modal content -->
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <p style="color: black;">Some text in the Modal..</p>
+              </div>
+            </div>
+
               <a href="/addCourier" class="btn btn-sm btn-warning">Add New</a></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
-          <li class="list-group-item"></li>
+          <li class="list-group-item">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Courier Number</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Availability</th>
+                  <th scope="col">Current Location</th>
+                  <th scope="col">Order Number</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">1</th>
+                  <td>First Courier Number</td>
+                  <td>First Name</td>
+                  <td>First Availability</td>
+                  <td>First Current Location</td>
+                  <td>First Order Number</td>
+                </tr>
+                <tr>
+                  <th scope="row">2</th>
+                  <td>Second Courier Number</td>
+                  <td>Second Name</td>
+                  <td>Second Availability</td>
+                  <td>Second Current Location</td>
+                  <td>Second Order Number</td>
+                </tr>
+                <tr>
+                  <th scope="row">3</th>
+                  <td>Third Courier Number</td>
+                  <td>Third Name</td>
+                  <td>Third Availability</td>
+                  <td>Third Current Location</td>
+                  <td>Third Order Number</td>
+                </tr>
+                <tr>
+                  <th scope="row">4</th>
+                  <td>Fourth Courier Number</td>
+                  <td>Fourth Name</td>
+                  <td>Fourth Availability</td>
+                  <td>Fourth Current Location</td>
+                  <td>Fourth Order Number</td>
+                </tr>
+              </tbody>
+            </table>
+          </li>
         </ul>
      </div>
  </div>
 </center>
+
+<center>
+  <div class="row mt-3">
+      <div class="col-md-6" style="z-index: 0;">
+          <ul class="list-group">
+           <li class="list-group-item active">Menus <button class="btn btn-sm btn-success" id="See All Menus">See All</button>
+            <div id="MenuModal" class="modal">
+              <!-- Modal content -->
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <p style="color: black;">Some text in the Modal..</p>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-warning">Add New</button>
+           <li class="list-group-item"></li>
+           <li class="list-group-item"></li>
+           <li class="list-group-item"></li>
+           <li class="list-group-item"></li>
+         </ul>
+      </div>
+  </div>
+ </center>
+
+<style>
+  .modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 2; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  bottom: 0;
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+</style>
+
+<script>
+  // Get the modal
+var modal = document.getElementById("OrderModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("See All Orders");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+var modal = document.getElementById("UserModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("See All Users");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+var modal = document.getElementById("RestaurantModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("See All Restaurants");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+var modal = document.getElementById("CourierModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("See All Couriers");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+var modal = document.getElementById("MenuModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("See All Menus");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+</script>
 
 {% endblock %}
