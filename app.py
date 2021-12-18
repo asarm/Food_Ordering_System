@@ -15,25 +15,25 @@ with sqlite3.connect(DATABASE) as database:
 
     cursor.execute("CREATE TABLE IF NOT EXISTS couriers(id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id int PRIMARY KEY,content TEXT,orderDate datetime)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate datetime)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS menuItem(id int PRIMARY KEY,ingridients varchar(200))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS menuItem(id INTEGER PRIMARY KEY,ingridients varchar(200))")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id int PRIMARY KEY,menuName varchar(30))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id INTEGER PRIMARY KEY,menuName varchar(30))")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id int PRIMARY KEY,restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating real)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY,restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS review(id int PRIMARY KEY,rating int,reviewDate datetime)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate datetime)")
 
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId int,menuId int,PRIMARY KEY(orderId,menuId),"
+    cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId INTEGER,menuId int,PRIMARY KEY(orderId,menuId),"
                    "FOREIGN KEY (orderId) REFERENCES foodOrder(id),FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS has(menuId int,menuitemId int,PRIMARY KEY(menuId, menuItemId),"
+    cursor.execute("CREATE TABLE IF NOT EXISTS has(menuId INTEGER,menuitemId INTEGER,PRIMARY KEY(menuId, menuItemId),"
                    "FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE,"
                    "FOREIGN KEY (menuitemId) REFERENCES menuItem(id) ON UPDATE CASCADE)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS needs(menuItemId int,orderId int,menuId int,PRIMARY KEY(menuItemID, orderId, menuId),"
+    cursor.execute("CREATE TABLE IF NOT EXISTS needs(menuItemId INTEGER,orderId INTEGER,menuId INTEGER,PRIMARY KEY(menuItemID, orderId, menuId),"
                     "FOREIGN KEY (menuItemId) REFERENCES menuItem(id) ON UPDATE CASCADE,"
                    "FOREIGN KEY (orderId) REFERENCES menu(id),FOREIGN KEY (menuId) REFERENCES consistsof(menuId) ON UPDATE CASCADE)")
     try: ##Without try-catch, throws a duplicate error. 
@@ -60,19 +60,27 @@ def loginView():
 
         valid_password = ""
 
-        cursor.execute("SELECT username,password,user_type FROM users WHERE email=(?)", (email,))
+        cursor.execute("SELECT username,password,user_type, address, lat, lng FROM users WHERE email=(?)", (email,))
         query = cursor.fetchall()
 
         if len(query) == 0:
-            print("user is not exists")
+            print("user does not exists")
         else:
             username = query[0][0]
             valid_password = query[0][1]
             user_type = query[0][2]
+            address = query[0][3]
+            lat = query[0][4]
+            lng = query[0][5]
 
         if password == valid_password:
             session["username"] = username
             session["user_type"] = user_type
+            session["email"] = email
+            session["password"] = password
+            session["address"] = address
+            session["lat"] = lat
+            session["lng"] = lng
             session["logged_in"] = True
 
             if user_type == 0:
@@ -152,6 +160,52 @@ def addCourier():
 
     return render_template('addCourier.html')
 
+@app.route("/userSettings", methods=["GET", "POST"])
+def userSettings():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+    
+    cursor.execute("SELECT username, email, password, address, lat, lng FROM users")
+    query = cursor.fetchall()
+
+    oldUsername = session['username']
+    oldEmail = session['email']
+    oldPassword = session['password']
+    oldAddress = session['address']
+    oldLat = session['lat']
+    oldLng = session['lng']
+
+
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+        address = request.form["address"]
+        
+
+        if (name):
+            cursor.execute("UPDATE users SET username =(?) WHERE username =(?)", (name, oldUsername,))
+            query = cursor.fetchall()
+        if (email):
+            cursor.execute("UPDATE users SET email =(?) WHERE email =(?)", (email, oldEmail,))
+            query = cursor.fetchall()
+        if (password):
+            cursor.execute("UPDATE users SET password =(?) WHERE password =(?)", (password, oldPassword,))
+            query = cursor.fetchall()
+        if (address):
+            cursor.execute("UPDATE users SET address =(?) WHERE address =(?)", (address, oldAddress,))
+            coordinates = searchCoordinates(address)
+            lat, lng = coordinates[0], coordinates[1]
+            cursor.execute("UPDATE users SET lat =(?) WHERE lat =(?)", (lat, oldLat,))
+            cursor.execute("UPDATE users SET lng =(?) WHERE lng =(?)", (lng, oldLng,))
+            query = cursor.fetchall()
+            
+
+        database.commit()
+        return redirect(url_for("homeView", title="Login"))
+
+    return render_template('userSettings.html')
+
 @app.route("/addRestaurant", methods=["GET", "POST"])
 def addRestaurant():
     with sqlite3.connect(DATABASE) as database:
@@ -174,7 +228,7 @@ def addRestaurant():
 def addUser():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
-
+    
     if request.method == "POST":
         username = request.form["username"]
         email = request.form["email"]
