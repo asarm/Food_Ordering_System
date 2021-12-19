@@ -144,34 +144,15 @@
                 </tr>
               </thead>
               <tbody>
+              {%for i in range(data["users"]|length)%}
                 <tr>
-                  <th scope="row">1</th>
-                  <td>First Username</td>
-                  <td>First Email</td>
-                  <td>First Address</td>
-                  <td>First Register Date</td>
+                  <th scope="row">{{ i+1 }}</th>
+                  <td>{{ data["users"][i][0] }}</td>
+                  <td>{{ data["users"][i][1] }}</td>
+                  <td>{{ data["users"][i][2] }}</td>
+                  <td>{{ data["users"][i][3] }}</td>
                 </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Second Username</td>
-                  <td>Second Email</td>
-                  <td>Second Address</td>
-                  <td>Second Register Date</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Third Username</td>
-                  <td>Third Email</td>
-                  <td>Third Address</td>
-                  <td>Third Register Date</td>
-                </tr>
-                <tr>
-                  <th scope="row">4</th>
-                  <td>Fourth Username</td>
-                  <td>Fourth Email</td>
-                  <td>Fourth Address</td>
-                  <td>Fourth Register Date</td>
-                </tr>
+              {%endfor%}
               </tbody>
             </table>
           </li>
@@ -205,34 +186,15 @@
                 </tr>
               </thead>
               <tbody>
+                {%for i in range(data["restaurants"]|length)%}
                 <tr>
-                  <th scope="row">1</th>
-                  <td>First Name</td>
-                  <td>First Address</td>
-                  <td>First Open Status</td>
-                  <td>First Average Rating</td>
+                  <th scope="row">{{ i+1 }}</th>
+                  <td>{{ data["restaurants"][i][0] }}</td>
+                  <td>{{ data["restaurants"][i][1] }}</td>
+                  <td>{{ data["restaurants"][i][2] }}</td>
+                  <td>{{ data["restaurants"][i][3] }}</td>
                 </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Second Name</td>
-                  <td>Second Address</td>
-                  <td>Second Open Status</td>
-                  <td>Second Average Rating</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Third Name</td>
-                  <td>Third Address</td>
-                  <td>Third Open Status</td>
-                  <td>Third Average Rating</td>
-                </tr>
-                <tr>
-                  <th scope="row">4</th>
-                  <td>Fourth Name</td>
-                  <td>Fourth Address</td>
-                  <td>Fourth Open Status</td>
-                  <td>Fourth Average Rating</td>
-                </tr>
+              {%endfor%}
               </tbody>
             </table>
           </li>
@@ -263,38 +225,16 @@
                 </tr>
               </thead>
               <tbody>
+                {%for i in range(data["couriers"]|length)%}
                 <tr>
-                  <th scope="row">1</th>
-                  <td>First Courier Number</td>
-                  <td>First Name</td>
-                  <td>First Availability</td>
-                  <td>First Current Location</td>
-                  <td>First Order Number</td>
+                  <th scope="row">{{ i+1 }}</th>
+                    <td>{{ data["couriers"][i][0] }}</td>
+                    <td>{{ data["couriers"][i][1] }}</td>
+                    <td>{{ data["couriers"][i][2] }}</td>
+                    <td>({{ data["couriers"][i][3] }},{{ data["couriers"][i][4] }})</td>
+                  <td>{{ data["couriers"][i][5] }}</td>
                 </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Second Courier Number</td>
-                  <td>Second Name</td>
-                  <td>Second Availability</td>
-                  <td>Second Current Location</td>
-                  <td>Second Order Number</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Third Courier Number</td>
-                  <td>Third Name</td>
-                  <td>Third Availability</td>
-                  <td>Third Current Location</td>
-                  <td>Third Order Number</td>
-                </tr>
-                <tr>
-                  <th scope="row">4</th>
-                  <td>Fourth Courier Number</td>
-                  <td>Fourth Name</td>
-                  <td>Fourth Availability</td>
-                  <td>Fourth Current Location</td>
-                  <td>Fourth Order Number</td>
-                </tr>
+              {%endfor%}
               </tbody>
             </table>
           </li>

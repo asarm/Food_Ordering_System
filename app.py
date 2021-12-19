@@ -131,7 +131,8 @@ def homeView():
     if not session.get('logged_in'):
         return render_template('login.html', title='Login')
     if session["user_type"] == 1:
-        return render_template('adminHome.html', title='Admin Page', username=session["username"])
+        data = getAllDbData(toGet=["users","restaurants","couriers"])
+        return render_template('adminHome.html', title='Admin Page', username=session["username"], data=data)
     else:
         return render_template('homePage.html', title='Home', username= session["username"])
 
@@ -229,7 +230,6 @@ def addUser():
 
     return render_template('addUser.html', title='Register')
 
-
 @app.route("/exit", methods=["GET"])
 def exit():
     session["username"] = None
@@ -262,6 +262,41 @@ def searchCoordinates(address):
     lng = resp["lng"]
 
     return lat, lng
+
+def getUsers(cursor):
+    cursor.execute("SELECT username,email,address,registred_date,user_type FROM users ORDER BY registred_date desc")
+    query = cursor.fetchall()
+
+    return query
+
+def getCouriers(cursor):
+    cursor.execute("SELECT id,name, is_available,lat,lng,orderId FROM couriers ORDER BY id desc")
+    query = cursor.fetchall()
+
+    return query
+
+def getRestaurants(cursor):
+    cursor.execute("SELECT restaurantName,address,isOpen,averageRating FROM restaurant ORDER BY id desc")
+    query = cursor.fetchall()
+
+    return query
+
+def getAllDbData(toGet):
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    data = {}
+
+    for entity in toGet:
+        if entity == "couriers":
+            data[entity] = getCouriers(cursor)
+        if entity == "users":
+            data[entity] = getUsers(cursor)
+        if entity == "restaurants":
+            data[entity] =  getRestaurants(cursor)
+        else:
+            pass
+    return data
 
 if __name__ == '__main__':
     app.run(debug=True)
