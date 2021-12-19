@@ -58,7 +58,7 @@ def loginView():
         email = request.form["email"]
         password = request.form["password"]
 
-        valid_password = ""
+        username, user_type,address, lat, lng,valid_password = "","","","","",""
 
         cursor.execute("SELECT username,password,user_type, address, lat, lng FROM users WHERE email=(?)", (email,))
         query = cursor.fetchall()
@@ -74,14 +74,7 @@ def loginView():
             lng = query[0][5]
 
         if password == valid_password:
-            session["username"] = username
-            session["user_type"] = user_type
-            session["email"] = email
-            session["password"] = password
-            session["address"] = address
-            session["lat"] = lat
-            session["lng"] = lng
-            session["logged_in"] = True
+            updateUserInfo(username, user_type, email, password, address, lat, lng)
 
             if user_type == 0:
                 return redirect('home')
@@ -139,7 +132,7 @@ def homeView():
         return render_template('login.html', title='Login')
     if session["user_type"] == 1:
         return render_template('adminHome.html', title='Admin Page', username=session["username"])
-    if session["user_type"] == 0:
+    else:
         return render_template('homePage.html', title='Home', username= session["username"])
 
 @app.route("/addCourier", methods=["GET", "POST"])
@@ -164,7 +157,7 @@ def addCourier():
 def userSettings():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
-    
+
     cursor.execute("SELECT username, email, password, address, lat, lng FROM users")
     query = cursor.fetchall()
 
@@ -175,36 +168,28 @@ def userSettings():
     oldLat = session['lat']
     oldLng = session['lng']
 
-
     if request.method == "POST":
         name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
         address = request.form["address"]
-        
 
-        if (name):
-            cursor.execute("UPDATE users SET username =(?) WHERE username =(?)", (name, oldUsername,))
-            query = cursor.fetchall()
-        if (email):
-            cursor.execute("UPDATE users SET email =(?) WHERE email =(?)", (email, oldEmail,))
-            query = cursor.fetchall()
-        if (password):
-            cursor.execute("UPDATE users SET password =(?) WHERE password =(?)", (password, oldPassword,))
-            query = cursor.fetchall()
-        if (address):
-            cursor.execute("UPDATE users SET address =(?) WHERE address =(?)", (address, oldAddress,))
+        if address != oldAddress:
             coordinates = searchCoordinates(address)
             lat, lng = coordinates[0], coordinates[1]
-            cursor.execute("UPDATE users SET lat =(?) WHERE lat =(?)", (lat, oldLat,))
-            cursor.execute("UPDATE users SET lng =(?) WHERE lng =(?)", (lng, oldLng,))
-            query = cursor.fetchall()
-            
+            cursor.execute("UPDATE users SET username=?,email=?,password=?,address=?,lat=?,lng=?"
+                           " WHERE username =(?)", (name,email,password,address,lat,lng,oldUsername,))
+        else:
+            cursor.execute("UPDATE users SET username=?,email=?,password=?,address=?"
+                           " WHERE username =(?)", (name,email,password,address,oldUsername,))
+
 
         database.commit()
-        return redirect(url_for("homeView", title="Login"))
 
-    return render_template('userSettings.html')
+        updateUserInfo(name, 0, email, password, address)
+        return redirect(url_for("homeView", title="Home"))
+
+    return render_template('userSettings.html', username=oldUsername, address=oldAddress, email=oldEmail, password=oldPassword)
 
 @app.route("/addRestaurant", methods=["GET", "POST"])
 def addRestaurant():
@@ -253,6 +238,16 @@ def exit():
 
     return redirect('/')
 
+def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):
+    session["username"] = username
+    session["user_type"] = user_type
+    session["email"] = email
+    session["password"] = password
+    session["address"] = address
+    if lat != None and lng != None:
+        session["lat"] = lat
+        session["lng"] = lng
+    session["logged_in"] = True
 
 def searchCoordinates(address):
     address = address.replace(" ", "+")
