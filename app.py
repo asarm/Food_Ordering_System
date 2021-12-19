@@ -24,7 +24,7 @@ with sqlite3.connect(DATABASE) as database:
     cursor.execute("CREATE TABLE IF NOT EXISTS menu(id INTEGER PRIMARY KEY,menuName varchar(30))")
 
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY,restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
+        "CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY, restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate datetime)")
 
@@ -104,7 +104,7 @@ def adminRegisterView():
         lat, lng = coordinates[0], coordinates[1]
 
         cursor.execute("INSERT INTO users(username,email,password,user_type, address, lat, lng) VALUES(?,?,?,?,?,?,?)",
-                       (username, email, password, 1, address, lat, lng))
+                       (username, email, password, 1, address.lower(), lat, lng))
         database.commit()
         return redirect(url_for("loginView", title="Login"))
 
@@ -125,7 +125,7 @@ def registerView():
         lat, lng = coordinates[0], coordinates[1]
 
         cursor.execute("INSERT INTO users(username,email,password,user_type, address, lat, lng) VALUES(?,?,?,?,?,?,?)",
-                       (username, email, password, 0, address, lat, lng))
+                       (username, email, password, 0, address.lower(), lat, lng))
         database.commit()
         return redirect(url_for("loginView", title="Login"))
 
@@ -137,7 +137,7 @@ def homeView():
     if not session.get('logged_in'):
         return render_template('auth/login.html', title='Login')
     if session["user_type"] == 1:
-        data = getAllDbData(toGet=["users", "restaurants", "couriers"], limit=4)
+        data = getAllDbData(toGet=["users", "restaurant", "couriers"], limit=4)
         return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
     else:
         return render_template('user/homePage.html', title='Home', username=session["username"])
@@ -159,7 +159,7 @@ def addCourier():
         database.commit()
         return redirect(url_for("homeView", title="Login"))
 
-    return render_template('admin/insert_operations/addCourier.html')
+    return render_template('admin/insert_operations/addCourier.html', username=session["username"])
 
 
 @app.route("/userSettings", methods=["GET", "POST"])
@@ -173,8 +173,6 @@ def userSettings():
     oldEmail = session['email']
     oldPassword = session['password']
     oldAddress = session['address']
-    oldLat = session['lat']
-    oldLng = session['lng']
 
     if request.method == "POST":
         name = request.form["name"]
@@ -212,12 +210,12 @@ def addRestaurant():
         lat, lng = coordinates[0], coordinates[1]
 
         cursor.execute(
-            "INSERT INTO restaurant(restaurantName, address, lat, lng, isOpen, averageRating) VALUES(?, ?, ?, ?, ?,?)",
-            (name, address, lat, lng, 1, 0))
+            "INSERT INTO restaurant(restaurantName, address, lat, lng, isOpen, averageRating) VALUES(?, ?, ?, ?, ?, ?)",
+            (name, address, lat, lng, 1, 0.0))
         database.commit()
         return redirect(url_for("homeView", title="Login"))
 
-    return render_template('admin/insert_operations/addRestaurant.html')
+    return render_template('admin/insert_operations/addRestaurant.html', username=session["username"])
 
 
 @app.route("/addUser", methods=["GET", "POST"])
@@ -238,8 +236,7 @@ def addUser():
         database.commit()
         return redirect(url_for("loginView", title="Login"))
 
-    return render_template('admin/insert_operations/addUser.html', title='Register')
-
+    return render_template('admin/insert_operations/addUser.html', title='Register', username=session["username"])
 
 @app.route("/users", methods=["GET", "POST"])
 def allUsers():
@@ -250,7 +247,7 @@ def allUsers():
     if request.method == "POST":
         if 'order' in request.form:
             orderBy = request.form['orderBy'].lower()
-            command = "SELECT  username,email,address,registred_date,user_type as type FROM users ORDER BY "+str(orderBy)
+            command = "SELECT username,email,address,registred_date,user_type as type FROM users ORDER BY "+str(orderBy)
             cursor.execute(command)
             query = cursor.fetchall()
             data["users"] = query
@@ -296,6 +293,133 @@ def allUsers():
 
     return render_template("admin/list_operations/list_users.html", username=session["username"], data=data)
 
+@app.route("/restaurants", methods=["GET", "POST"])
+def allRestaurants():
+    data = {}
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        if 'order' in request.form:
+            orderBy = request.form['orderBy'].lower()
+            print(orderBy)
+            command = "SELECT restaurantName as Name, address, averageRating as Rating, isOpen as open FROM restaurant ORDER BY "+str(orderBy)
+            cursor.execute(command)
+            query = cursor.fetchall()
+            data["restaurant"] = query
+
+        if 'filter' in request.form:
+            filtered_cols, expected_vals = [], []
+            q = ""
+
+            for c in request.form.keys():
+                if request.form[c] != '' and request.form[c] != "filter":
+                    if request.form[c] == "on":
+                        filtered_cols.append("isOpen")
+                        expected_vals.append(1)
+                    else:
+                        filtered_cols.append(c)
+                        expected_vals.append(request.form[c])
+
+            print(expected_vals)
+            print(filtered_cols)
+
+            if len(expected_vals) > 0:
+                if filtered_cols[0] != "isOpen":
+                    q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
+                else:
+                    q += " isOpen = 1"
+
+                if len(expected_vals) > 1:
+                    for index in range(1, len(expected_vals)):
+                        if filtered_cols[index] != "isOpen":
+                            q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
+                    if filtered_cols.count("isOpen") > 0:
+                        q += " and isOpen = 1"
+
+                command = "SELECT restaurantName as Name, address, averageRating as Rating, isOpen as open FROM restaurant WHERE "+q
+                print(command)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                data["restaurant"] = query
+            else:
+                data = getAllDbData(toGet=["restaurant"])
+    else:
+        data = getAllDbData(toGet=["restaurant"])
+
+    return render_template("admin/list_operations/list_restaurants.html", username=session["username"], data=data)
+
+@app.route("/couriers", methods=["GET", "POST"])
+def allCouriers():
+    data = {}
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        if 'order' in request.form:
+            orderBy = request.form['orderBy']
+            command = "SELECT id as Number, name as Name, is_available as Availability FROM couriers ORDER BY "+str(orderBy)
+            print(command)
+            cursor.execute(command)
+            query = cursor.fetchall()
+            data["couriers"] = query
+            
+        if 'filter' in request.form:
+            filtered_cols, expected_vals = [], []
+            q = ""
+
+            for c in request.form.keys():
+                if request.form[c] != '' and request.form[c] != "filter":
+                    if request.form[c] == "on":
+                        filtered_cols.append("is_available")
+                        expected_vals.append(1)
+                    else:
+                        filtered_cols.append(c)
+                        expected_vals.append(request.form[c])
+
+            print(expected_vals)
+            print(filtered_cols)
+
+            if len(expected_vals) > 0:
+                if filtered_cols[0] != "is_available":
+                    q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
+                else:
+                    q += " is_available = 1"
+
+                if len(expected_vals) > 1:
+                    for index in range(1, len(expected_vals)):
+                        if filtered_cols[index] != "is_available":
+                            q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
+                    if filtered_cols.count("is_available") > 0:
+                        q += " and is_available = 1"
+
+                command = "SELECT id as Number, name as Name, is_available as Availability FROM couriers WHERE "+q
+                print(command)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                data["couriers"] = query
+            else:
+                data = getAllDbData(toGet=["couriers"])
+    else:
+        data = getAllDbData(toGet=["couriers"])
+
+    return render_template("admin/list_operations/list_couriers.html", username=session["username"], data=data)
+
+
+@app.route("/selectRestaurant", methods=["GET", "POST"])
+def selectRestaurant():
+    data = {}
+    query = getAllDbData(toGet=["restaurant"])
+    data = query
+    return render_template('user/selectRestaurant.html', title='Restaurants', username=session["username"], data=data)
+
+@app.route("/selectMenu", methods=["GET", "POST"])
+def selectMenu():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+
+    return render_template('user/selectMenu.html', title='Menus', username=session["username"],)
 
 @app.route("/exit", methods=["GET"])
 def exit():
@@ -352,7 +476,7 @@ def getCouriers(cursor, limit=None):
 
 
 def getRestaurants(cursor, limit=None):
-    cursor.execute("SELECT restaurantName,address,isOpen,averageRating FROM restaurant ORDER BY id desc")
+    cursor.execute("SELECT restaurantName,address,isOpen,averageRating, id FROM restaurant ORDER BY id desc")
     query = cursor.fetchall()
 
     return query
@@ -368,7 +492,7 @@ def getAllDbData(toGet, limit=None):
             data[entity] = getCouriers(cursor, limit)
         if entity == "users":
             data[entity] = getUsers(cursor, limit)
-        if entity == "restaurants":
+        if entity == "restaurant":
             data[entity] = getRestaurants(cursor, limit)
         else:
             pass
