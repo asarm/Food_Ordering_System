@@ -243,7 +243,39 @@ def addUser():
 
 @app.route("/users", methods=["GET", "POST"])
 def allUsers():
-    data = getAllDbData(toGet=["users"])
+    data = {}
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        if 'order' in request.form:
+            orderBy = request.form['orderBy'].lower()
+            command = "SELECT  username,email,address,registred_date,user_type as type FROM users ORDER BY "+str(orderBy)
+            cursor.execute(command)
+            query = cursor.fetchall()
+            data["users"] = query
+
+        if 'filter' in request.form:
+            filtered_cols, expected_vals = [], []
+            for c in request.form.keys():
+                if request.form[c] != '' and request.form[c] != "on" and request.form[c] != "filter":
+                    filtered_cols.append(c)
+                    expected_vals.append(request.form[c])
+
+            print(filtered_cols)
+            print(expected_vals)
+            if len(expected_vals) > 0:
+                command = "SELECT username,email,address,registred_date,user_type as type FROM users WHERE "+filtered_cols[0]+" LIKE "+(f"'%{expected_vals[0]}%'")
+                print(command)
+                print()
+                cursor.execute(command)
+                query = cursor.fetchall()
+                data["users"] = query
+            else:
+                data = getAllDbData(toGet=["users"])
+    else:
+        data = getAllDbData(toGet=["users"])
+
     return render_template("admin/list_operations/list_users.html", username=session["username"], data=data)
 
 

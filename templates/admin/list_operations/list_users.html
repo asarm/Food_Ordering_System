@@ -17,56 +17,55 @@
 
 {% block body %}
 <p>
-  <a class="btn btn-success" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Filter</a>
-  <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#multiCollapseExample2" aria-expanded="false" aria-controls="multiCollapseExample2">Order</button>
+  <a class="btn btn-success" data-toggle="collapse" href="#filter" role="button" aria-expanded="false" aria-controls="filter">Filter</a>
+  <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#order" aria-expanded="false" aria-controls="order">Order</button>
 </p>
 
 <div class="row">
   <div class="col">
-    <div class="collapse multi-collapse" id="multiCollapseExample1">
+    <div class="collapse multi-collapse" id="filter">
       <div class="card card-body">
-        <form>
+       <form action="/users" method="POST">
            <div class="form-group">
             <label for="exampleInputEmail1">By Username</label>
-            <input type="email" class="form-control" id="exampleInputEmail1"  placeholder="Enter username">
+            <input type="text" class="form-control" id="exampleInputEmail1" name="username" placeholder="Enter username">
           </div>
           <div class="form-group">
             <label for="exampleInputEmail1">By Email address</label>
-            <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter email">
+            <input type="text" class="form-control" id="exampleInputEmail1" name="email" placeholder="Enter email">
           </div>
           <div class="form-group">
             <label for="exampleInputEmail1">Address</label>
-            <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter address">
+            <input type="text" class="form-control" id="exampleInputEmail1" name="address" placeholder="Enter address">
           </div>
           <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="exampleCheck1">
+            <input type="checkbox" class="form-check-input" name="is_admin" id="exampleCheck1">
             <label class="form-check-label" for="exampleCheck1">is admin</label>
           </div>
-          <button type="submit" class="btn btn-success">Filter</button>
+          <button type="submit" name="filter" value="filter" class="btn btn-success">Filter</button>
         </form>
       </div>
     </div>
   </div>
   <div class="col">
-    <div class="collapse multi-collapse" id="multiCollapseExample2">
+    <div class="collapse multi-collapse" id="order">
       <div class="card card-body">
-        <form>
+        <form action="/users" method="POST">
             <div class="row">
                 <div class="col-md-1">
                     By
                 </div>
                 <div class="col-md-2">
-                    <select class="form-control" id="exampleFormControlSelect1">
+                    <select class="form-control" id="orderBy" name="orderBy">
                       <option>Username</option>
                       <option>Email</option>
                       <option>Address</option>
                       <option>Type</option>
-                      <option>Register Date</option>
+                      <option>Registred_date</option>
                    </select>
-            </div>
-
+                </div>
            </div>
-          <button type="submit" class="btn btn-secondary">Order</button>
+          <button type="submit" name="order" value="order" class="btn btn-secondary">Order</button>
         </form>
       </div>
     </div>
