@@ -264,18 +264,13 @@ def allUsers():
                     filtered_cols.append(c)
                     expected_vals.append(request.form[c])
 
-            print(filtered_cols)
-            print(expected_vals)
             if len(expected_vals) > 0:
                 q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
                 if len(expected_vals)>1:
                     for index in range(1,len(expected_vals)):
                         q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
 
-                # command = "SELECT username,email,address,registred_date,user_type as type FROM users WHERE "+filtered_cols[0]+" LIKE "+(f"'%{expected_vals[0]}%'")
                 command = "SELECT username,email,address,registred_date,user_type as type FROM users WHERE "+q
-                print(command)
-                print()
                 cursor.execute(command)
                 query = cursor.fetchall()
                 data["users"] = query
