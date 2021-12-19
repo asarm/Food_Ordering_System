@@ -10,10 +10,12 @@ DATABASE = 'system_db.db'
 with sqlite3.connect(DATABASE) as database:
     cursor = database.cursor()
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS users(username TEXT PRIMARY KEY,email TEXT,password TEXT,user_type INTEGER, address Text,"
-                   " lat REAL , lng REAL, registred_date Date DEFAULT (datetime('now','localtime')))")
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS users(username TEXT PRIMARY KEY,email TEXT,password TEXT,user_type INTEGER, address Text,"
+        " lat REAL , lng REAL, registred_date Date DEFAULT (datetime('now','localtime')))")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS couriers(id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng)")
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS couriers(id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng)")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate datetime)")
 
@@ -21,10 +23,10 @@ with sqlite3.connect(DATABASE) as database:
 
     cursor.execute("CREATE TABLE IF NOT EXISTS menu(id INTEGER PRIMARY KEY,menuName varchar(30))")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY,restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY,restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate datetime)")
-
 
     cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId INTEGER,menuId int,PRIMARY KEY(orderId,menuId),"
                    "FOREIGN KEY (orderId) REFERENCES foodOrder(id),FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE)")
@@ -33,23 +35,24 @@ with sqlite3.connect(DATABASE) as database:
                    "FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE,"
                    "FOREIGN KEY (menuitemId) REFERENCES menuItem(id) ON UPDATE CASCADE)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS needs(menuItemId INTEGER,orderId INTEGER,menuId INTEGER,PRIMARY KEY(menuItemID, orderId, menuId),"
-                    "FOREIGN KEY (menuItemId) REFERENCES menuItem(id) ON UPDATE CASCADE,"
-                   "FOREIGN KEY (orderId) REFERENCES menu(id),FOREIGN KEY (menuId) REFERENCES consistsof(menuId) ON UPDATE CASCADE)")
-    try: ##Without try-catch, throws a duplicate error. 
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS needs(menuItemId INTEGER,orderId INTEGER,menuId INTEGER,PRIMARY KEY(menuItemID, orderId, menuId),"
+        "FOREIGN KEY (menuItemId) REFERENCES menuItem(id) ON UPDATE CASCADE,"
+        "FOREIGN KEY (orderId) REFERENCES menu(id),FOREIGN KEY (menuId) REFERENCES consistsof(menuId) ON UPDATE CASCADE)")
+    try:  ##Without try-catch, throws a duplicate error.
         ## Foreign keys
         script = ("ALTER TABLE foodOrder ADD COLUMN courierID int REFERENCES couriers(id) ON UPDATE CASCADE;"
-              "ALTER TABLE foodOrder ADD COLUMN userUserName varchar(30) REFERENCES users(username) ON UPDATE CASCADE;"
-              "ALTER TABLE couriers ADD COLUMN orderId int REFERENCES foodOrder(id) ON UPDATE CASCADE;"
-              "ALTER TABLE review ADD COLUMN restaurantId int REFERENCES restaurant(id) ON UPDATE CASCADE;"
-              "ALTER TABLE review ADD COLUMN userUserName int REFERENCES users(username) ON UPDATE CASCADE;"
-              "ALTER TABLE menu ADD COLUMN restaurantId int REFERENCES restaurant(id) ON UPDATE CASCADE;")
+                  "ALTER TABLE foodOrder ADD COLUMN userUserName varchar(30) REFERENCES users(username) ON UPDATE CASCADE;"
+                  "ALTER TABLE couriers ADD COLUMN orderId int REFERENCES foodOrder(id) ON UPDATE CASCADE;"
+                  "ALTER TABLE review ADD COLUMN restaurantId int REFERENCES restaurant(id) ON UPDATE CASCADE;"
+                  "ALTER TABLE review ADD COLUMN userUserName int REFERENCES users(username) ON UPDATE CASCADE;"
+                  "ALTER TABLE menu ADD COLUMN restaurantId int REFERENCES restaurant(id) ON UPDATE CASCADE;")
         cursor.executescript(script)
     except:
         pass
 
 
-@app.route("/", methods=["GET","POST"])
+@app.route("/", methods=["GET", "POST"])
 def loginView():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
@@ -58,7 +61,7 @@ def loginView():
         email = request.form["email"]
         password = request.form["password"]
 
-        username, user_type,address, lat, lng,valid_password = "","","","","",""
+        username, user_type, address, lat, lng, valid_password = "", "", "", "", "", ""
 
         cursor.execute("SELECT username,password,user_type, address, lat, lng FROM users WHERE email=(?)", (email,))
         query = cursor.fetchall()
@@ -82,11 +85,12 @@ def loginView():
                 return redirect('home')
 
     if not session.get('logged_in'):
-        return render_template('login.html', title='Login')
+        return render_template('auth/login.html', title='Login')
     else:
         return redirect('home')
 
-@app.route("/adminRegister", methods=["GET","POST"])
+
+@app.route("/adminRegister", methods=["GET", "POST"])
 def adminRegisterView():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
@@ -104,9 +108,10 @@ def adminRegisterView():
         database.commit()
         return redirect(url_for("loginView", title="Login"))
 
-    return render_template('admin/adminRegister.html', title='Admin Register')
+    return render_template('admin/templates/auth/adminRegister.html', title='Admin Register')
 
-@app.route("/register", methods=["GET","POST"])
+
+@app.route("/register", methods=["GET", "POST"])
 def registerView():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
@@ -124,17 +129,19 @@ def registerView():
         database.commit()
         return redirect(url_for("loginView", title="Login"))
 
-    return render_template('register.html', title='Register')
+    return render_template('auth/register.html', title='Register')
 
-@app.route("/home", methods=["GET","POST"])
+
+@app.route("/home", methods=["GET", "POST"])
 def homeView():
     if not session.get('logged_in'):
-        return render_template('login.html', title='Login')
+        return render_template('auth/login.html', title='Login')
     if session["user_type"] == 1:
-        data = getAllDbData(toGet=["users","restaurants","couriers"])
+        data = getAllDbData(toGet=["users", "restaurants", "couriers"], limit=4)
         return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
     else:
-        return render_template('user/homePage.html', title='Home', username= session["username"])
+        return render_template('user/homePage.html', title='Home', username=session["username"])
+
 
 @app.route("/addCourier", methods=["GET", "POST"])
 def addCourier():
@@ -154,13 +161,13 @@ def addCourier():
 
     return render_template('admin/insert_operations/addCourier.html')
 
+
 @app.route("/userSettings", methods=["GET", "POST"])
 def userSettings():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
     cursor.execute("SELECT username, email, password, address, lat, lng FROM users")
-    query = cursor.fetchall()
 
     oldUsername = session['username']
     oldEmail = session['email']
@@ -179,18 +186,19 @@ def userSettings():
             coordinates = searchCoordinates(address)
             lat, lng = coordinates[0], coordinates[1]
             cursor.execute("UPDATE users SET username=?,email=?,password=?,address=?,lat=?,lng=?"
-                           " WHERE username =(?)", (name,email,password,address,lat,lng,oldUsername,))
+                           " WHERE username =(?)", (name, email, password, address, lat, lng, oldUsername,))
         else:
             cursor.execute("UPDATE users SET username=?,email=?,password=?,address=?"
-                           " WHERE username =(?)", (name,email,password,address,oldUsername,))
-
+                           " WHERE username =(?)", (name, email, password, address, oldUsername,))
 
         database.commit()
 
         updateUserInfo(name, 0, email, password, address)
         return redirect(url_for("homeView", title="Home"))
 
-    return render_template('user/userSettings.html', username=oldUsername, address=oldAddress, email=oldEmail, password=oldPassword)
+    return render_template('user/userSettings.html', username=oldUsername, address=oldAddress, email=oldEmail,
+                           password=oldPassword)
+
 
 @app.route("/addRestaurant", methods=["GET", "POST"])
 def addRestaurant():
@@ -203,18 +211,20 @@ def addRestaurant():
         coordinates = searchCoordinates(address)
         lat, lng = coordinates[0], coordinates[1]
 
-        cursor.execute("INSERT INTO restaurant(restaurantName, address, lat, lng, isOpen, averageRating) VALUES(?, ?, ?, ?, ?,?)",
-                       (name, address, lat, lng, 1, 0))
+        cursor.execute(
+            "INSERT INTO restaurant(restaurantName, address, lat, lng, isOpen, averageRating) VALUES(?, ?, ?, ?, ?,?)",
+            (name, address, lat, lng, 1, 0))
         database.commit()
         return redirect(url_for("homeView", title="Login"))
 
     return render_template('admin/insert_operations/addRestaurant.html')
 
+
 @app.route("/addUser", methods=["GET", "POST"])
 def addUser():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
-    
+
     if request.method == "POST":
         username = request.form["username"]
         email = request.form["email"]
@@ -230,6 +240,13 @@ def addUser():
 
     return render_template('admin/insert_operations/addUser.html', title='Register')
 
+
+@app.route("/users", methods=["GET", "POST"])
+def allUsers():
+    data = getAllDbData(toGet=["users"])
+    return render_template("admin/list_operations/list_users.html", username=session["username"], data=data)
+
+
 @app.route("/exit", methods=["GET"])
 def exit():
     session["username"] = None
@@ -237,6 +254,7 @@ def exit():
     session["user_type"] = None
 
     return redirect('/')
+
 
 def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):
     session["username"] = username
@@ -248,6 +266,7 @@ def updateUserInfo(username, user_type, email, password, address, lat=None, lng=
         session["lat"] = lat
         session["lng"] = lng
     session["logged_in"] = True
+
 
 def searchCoordinates(address):
     address = address.replace(" ", "+")
@@ -263,40 +282,48 @@ def searchCoordinates(address):
 
     return lat, lng
 
-def getUsers(cursor):
-    cursor.execute("SELECT username,email,address,registred_date,user_type FROM users ORDER BY registred_date desc")
+
+def getUsers(cursor, limit=None):
+    if limit != None:
+        cursor.execute(
+            "SELECT username,email,address,registred_date,user_type FROM users ORDER BY registred_date desc LIMIT ?", (limit,))
+    else:
+        cursor.execute("SELECT username,email,address,registred_date,user_type FROM users ORDER BY registred_date desc")
     query = cursor.fetchall()
 
     return query
 
-def getCouriers(cursor):
+
+def getCouriers(cursor, limit=None):
     cursor.execute("SELECT id,name, is_available,lat,lng,orderId FROM couriers ORDER BY id desc")
     query = cursor.fetchall()
 
     return query
 
-def getRestaurants(cursor):
+
+def getRestaurants(cursor, limit=None):
     cursor.execute("SELECT restaurantName,address,isOpen,averageRating FROM restaurant ORDER BY id desc")
     query = cursor.fetchall()
 
     return query
 
-def getAllDbData(toGet):
+
+def getAllDbData(toGet, limit=None):
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
     data = {}
-
     for entity in toGet:
         if entity == "couriers":
-            data[entity] = getCouriers(cursor)
+            data[entity] = getCouriers(cursor, limit)
         if entity == "users":
-            data[entity] = getUsers(cursor)
+            data[entity] = getUsers(cursor, limit)
         if entity == "restaurants":
-            data[entity] =  getRestaurants(cursor)
+            data[entity] = getRestaurants(cursor, limit)
         else:
             pass
     return data
+
 
 if __name__ == '__main__':
     app.run(debug=True)
