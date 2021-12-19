@@ -79,7 +79,7 @@ def loginView():
             if user_type == 0:
                 return redirect('home')
             elif user_type == 1:
-                return render_template('adminHome.html', title='Home', username= session["username"])
+                return redirect('home')
 
     if not session.get('logged_in'):
         return render_template('login.html', title='Login')
@@ -104,7 +104,7 @@ def adminRegisterView():
         database.commit()
         return redirect(url_for("loginView", title="Login"))
 
-    return render_template('adminRegister.html', title='Admin Register')
+    return render_template('admin/adminRegister.html', title='Admin Register')
 
 @app.route("/register", methods=["GET","POST"])
 def registerView():
@@ -132,9 +132,9 @@ def homeView():
         return render_template('login.html', title='Login')
     if session["user_type"] == 1:
         data = getAllDbData(toGet=["users","restaurants","couriers"])
-        return render_template('adminHome.html', title='Admin Page', username=session["username"], data=data)
+        return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
     else:
-        return render_template('homePage.html', title='Home', username= session["username"])
+        return render_template('user/homePage.html', title='Home', username= session["username"])
 
 @app.route("/addCourier", methods=["GET", "POST"])
 def addCourier():
@@ -152,7 +152,7 @@ def addCourier():
         database.commit()
         return redirect(url_for("homeView", title="Login"))
 
-    return render_template('addCourier.html')
+    return render_template('admin/insert_operations/addCourier.html')
 
 @app.route("/userSettings", methods=["GET", "POST"])
 def userSettings():
@@ -190,7 +190,7 @@ def userSettings():
         updateUserInfo(name, 0, email, password, address)
         return redirect(url_for("homeView", title="Home"))
 
-    return render_template('userSettings.html', username=oldUsername, address=oldAddress, email=oldEmail, password=oldPassword)
+    return render_template('user/userSettings.html', username=oldUsername, address=oldAddress, email=oldEmail, password=oldPassword)
 
 @app.route("/addRestaurant", methods=["GET", "POST"])
 def addRestaurant():
@@ -208,7 +208,7 @@ def addRestaurant():
         database.commit()
         return redirect(url_for("homeView", title="Login"))
 
-    return render_template('addRestaurant.html')
+    return render_template('admin/insert_operations/addRestaurant.html')
 
 @app.route("/addUser", methods=["GET", "POST"])
 def addUser():
@@ -228,7 +228,7 @@ def addUser():
         database.commit()
         return redirect(url_for("loginView", title="Login"))
 
-    return render_template('addUser.html', title='Register')
+    return render_template('admin/insert_operations/addUser.html', title='Register')
 
 @app.route("/exit", methods=["GET"])
 def exit():
