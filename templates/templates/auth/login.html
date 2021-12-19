@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block body %}
+
+<!-- to be filled by the Python script -->
+
+<div class="col-md-5">
+    <h3>{{ title }}</h3>
+    <hr>
+    <form action="/" method="POST">
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input type="email" class="form-control" id="email" aria-describedby="emailHelp" name="email" placeholder="Enter email">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+      </div>
+      <button type="submit" class="btn btn-primary">Login</button>
+         <small><a href="/register" style="color:black">Register</a></small>
+    </form>
+</div>
+
+{% endblock %}
