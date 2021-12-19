@@ -108,7 +108,7 @@ def adminRegisterView():
         database.commit()
         return redirect(url_for("loginView", title="Login"))
 
-    return render_template('admin/templates/auth/adminRegister.html', title='Admin Register')
+    return render_template('auth/adminRegister.html', title='Admin Register')
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -260,17 +260,32 @@ def allUsers():
             q = ""
 
             for c in request.form.keys():
-                if request.form[c] != '' and request.form[c] != "on" and request.form[c] != "filter":
-                    filtered_cols.append(c)
-                    expected_vals.append(request.form[c])
+                if request.form[c] != '' and request.form[c] != "filter":
+                    if request.form[c] == "on":
+                        filtered_cols.append("user_type")
+                        expected_vals.append(1)
+                    else:
+                        filtered_cols.append(c)
+                        expected_vals.append(request.form[c])
+
+            print(expected_vals)
+            print(filtered_cols)
 
             if len(expected_vals) > 0:
-                q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
-                if len(expected_vals)>1:
-                    for index in range(1,len(expected_vals)):
-                        q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
+                if filtered_cols[0] != "user_type":
+                    q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
+                else:
+                    q += " user_type = 1"
+
+                if len(expected_vals) > 1:
+                    for index in range(1, len(expected_vals)):
+                        if filtered_cols[index] != "user_type":
+                            q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
+                    if filtered_cols.count("user_type") > 0:
+                        q += " and user_type = 1"
 
                 command = "SELECT username,email,address,registred_date,user_type as type FROM users WHERE "+q
+                print(command)
                 cursor.execute(command)
                 query = cursor.fetchall()
                 data["users"] = query
