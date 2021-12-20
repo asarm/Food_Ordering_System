@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">AppName</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active"><a class="nav-link" href="/">{{username}}</a></li>
+          <li class="nav-item active"><a class="nav-link" href="/exit">Exit</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block body %}
+<h3>Select Restaurant</h3>
+    <hr>
+     <form action="/selectMenu" method="POST">
+      <div class="form-group">
+        <ul class="list-group">
+            <li class="list-group-item">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Address</th>
+            <th scope="col">Open</th>
+            <th scope="col">Average Rating</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {%for i in range(data["restaurant"]|length)%}
+          <tr>
+            <th scope="row">{{ i+1 }}</th>
+            <td>{{ data["restaurant"][i][0] }}</td>
+            <td>{{ data["restaurant"][i][1] }}</td>
+            <td>{{ data["restaurant"][i][2] }}</td>
+            <td>{{ data["restaurant"][i][3] }}</td>
+            <td><button type="submit" name="selectedRestaurant" value='{{ data["restaurant"][i][4] }}' class="btn btn-success">Select</button></td>
+          </tr>
+        {%endfor%}
+        </tbody>
+      </table>
+      <hr>
+      <a href="\selectMenu" class="btn btn-primary">Proceed</a>
+    </li>
+  </ul>
+  {% endblock %}
