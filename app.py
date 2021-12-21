@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import requests
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
@@ -138,6 +139,8 @@ def homeView():
         return render_template('auth/login.html', title='Login')
     if session["user_type"] == 1:
         data = getAllDbData(toGet=["users", "restaurant", "couriers"], limit=4)
+        session["isFiltered"], session["filteredData"] = False, {}
+
         return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
     else:
         return render_template('user/homePage.html', title='Home', username=session["username"])
@@ -240,17 +243,23 @@ def addUser():
 
 @app.route("/users", methods=["GET", "POST"])
 def allUsers():
-    data = {}
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
     if request.method == "POST":
         if 'order' in request.form:
             orderBy = request.form['orderBy'].lower()
-            command = "SELECT username,email,address,registred_date,user_type as type FROM users ORDER BY "+str(orderBy)
-            cursor.execute(command)
-            query = cursor.fetchall()
-            data["users"] = query
+
+            if session["isFiltered"] == False:
+                command = "SELECT username,email,address,registred_date,user_type as type FROM users ORDER BY "+str(orderBy)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["users"] = query
+            else:
+                df = pd.DataFrame(session["filteredData"]["users"],
+                                  columns=['username', 'email','address','registred_date','type'])
+                df = df.sort_values(by=orderBy)
+                session["filteredData"]["users"] = df.values.tolist()
 
         if 'filter' in request.form:
             filtered_cols, expected_vals = [], []
@@ -264,9 +273,6 @@ def allUsers():
                     else:
                         filtered_cols.append(c)
                         expected_vals.append(request.form[c])
-
-            print(expected_vals)
-            print(filtered_cols)
 
             if len(expected_vals) > 0:
                 if filtered_cols[0] != "user_type":
@@ -282,16 +288,18 @@ def allUsers():
                         q += " and user_type = 1"
 
                 command = "SELECT username,email,address,registred_date,user_type as type FROM users WHERE "+q
-                print(command)
                 cursor.execute(command)
                 query = cursor.fetchall()
-                data["users"] = query
+                session["filteredData"]["users"] = query
             else:
-                data = getAllDbData(toGet=["users"])
-    else:
-        data = getAllDbData(toGet=["users"])
+                session["filteredData"] = getAllDbData(toGet=["users"])
+            session["isFiltered"] = True
 
-    return render_template("admin/list_operations/list_users.html", username=session["username"], data=data)
+    else:
+        session["filteredData"] = getAllDbData(toGet=["users"])
+        session["isFiltered"] = False
+
+    return render_template("admin/list_operations/list_users.html", username=session["username"], data=session["filteredData"])
 
 @app.route("/restaurants", methods=["GET", "POST"])
 def allRestaurants():
