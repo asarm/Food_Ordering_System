@@ -394,7 +394,6 @@ def allCouriers():
                         q += " and is_available = 1"
 
                 command = "SELECT id as Number, name as Name, is_available as Availability FROM couriers WHERE "+q
-                print(command)
                 cursor.execute(command)
                 query = cursor.fetchall()
                 data["couriers"] = query
@@ -418,6 +417,13 @@ def selectMenu():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    if request.method == "POST":
+        selectedRestaurantId = request.form["selectedRestaurant"]
+        command = "SELECT id,menuName,restaurantId FROM menu WHERE restaurantId="+selectedRestaurantId
+        cursor.execute(command)
+        query = cursor.fetchall()
+        print(selectedRestaurantId)
+        print(query)
 
     return render_template('user/selectMenu.html', title='Menus', username=session["username"],)
 
@@ -476,7 +482,7 @@ def getCouriers(cursor, limit=None):
 
 
 def getRestaurants(cursor, limit=None):
-    cursor.execute("SELECT restaurantName,address,isOpen,averageRating, id FROM restaurant ORDER BY id desc")
+    cursor.execute("SELECT restaurantName,address,isOpen,averageRating,id FROM restaurant ORDER BY id desc")
     query = cursor.fetchall()
 
     return query
