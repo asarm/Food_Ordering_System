@@ -138,7 +138,7 @@ def homeView():
     if not session.get('logged_in'):
         return render_template('auth/login.html', title='Login')
     if session["user_type"] == 1:
-        data = getAllDbData(toGet=["users", "restaurant", "couriers"], limit=4)
+        data = getAllDbData(toGet=["users", "restaurant", "couriers", "menu", "restaurantName"], limit=4)
         session["isFiltered"], session["filteredData"] = False, {}
 
         return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
@@ -241,6 +241,23 @@ def addUser():
 
     return render_template('admin/insert_operations/addUser.html', title='Register', username=session["username"])
 
+@app.route("/addMenu", methods=["GET", "POST"])
+def addMenu():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        menuName = request.form["Menu"]
+        restaurantName = request.form["Restaurant"]
+        
+
+        cursor.execute("INSERT INTO menu(menuName, restaurantId) VALUES(?, (SELECT id FROM restaurant WHERE restaurantName = (?)))",
+                       (menuName, restaurantName))
+        database.commit()
+        return redirect(url_for("loginView", title="Login"))
+
+    return render_template('admin/insert_operations/addMenu.html', title='Register', username=session["username"])
+
 @app.route("/users", methods=["GET", "POST"])
 def allUsers():
     with sqlite3.connect(DATABASE) as database:
@@ -303,18 +320,23 @@ def allUsers():
 
 @app.route("/restaurants", methods=["GET", "POST"])
 def allRestaurants():
-    data = {}
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
     if request.method == "POST":
         if 'order' in request.form:
             orderBy = request.form['orderBy'].lower()
-            print(orderBy)
-            command = "SELECT restaurantName as Name, address, averageRating as Rating, isOpen as open FROM restaurant ORDER BY "+str(orderBy)
-            cursor.execute(command)
-            query = cursor.fetchall()
-            data["restaurant"] = query
+
+            if session["isFiltered"] == False:
+                command = "SELECT restaurantName as Name, address as Address, isOpen as Open, averageRating as Rating FROM restaurant ORDER BY "+str(orderBy)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["restaurant"] = query
+            else:
+                df = pd.DataFrame(session["filteredData"]["restaurant"],
+                                  columns=['name', 'address','open','rating'])
+                df = df.sort_values(by=orderBy)
+                session["filteredData"]["restaurant"] = df.values.tolist()
 
         if 'filter' in request.form:
             filtered_cols, expected_vals = [], []
@@ -329,9 +351,6 @@ def allRestaurants():
                         filtered_cols.append(c)
                         expected_vals.append(request.form[c])
 
-            print(expected_vals)
-            print(filtered_cols)
-
             if len(expected_vals) > 0:
                 if filtered_cols[0] != "isOpen":
                     q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
@@ -345,33 +364,40 @@ def allRestaurants():
                     if filtered_cols.count("isOpen") > 0:
                         q += " and isOpen = 1"
 
-                command = "SELECT restaurantName as Name, address, averageRating as Rating, isOpen as open FROM restaurant WHERE "+q
-                print(command)
+                command = "SELECT restaurantName as Name, address as Address, isOpen as Open, averageRating as Rating FROM restaurant WHERE "+q
                 cursor.execute(command)
                 query = cursor.fetchall()
-                data["restaurant"] = query
+                session["filteredData"]["restaurant"] = query
             else:
-                data = getAllDbData(toGet=["restaurant"])
-    else:
-        data = getAllDbData(toGet=["restaurant"])
+                session["filteredData"] = getAllDbData(toGet=["restaurant"])
+            session["isFiltered"] = True
 
-    return render_template("admin/list_operations/list_restaurants.html", username=session["username"], data=data)
+    else:
+        session["filteredData"] = getAllDbData(toGet=["restaurant"])
+        session["isFiltered"] = False
+
+    return render_template("admin/list_operations/list_restaurants.html", username=session["username"], data=session["filteredData"])
 
 @app.route("/couriers", methods=["GET", "POST"])
 def allCouriers():
-    data = {}
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
     if request.method == "POST":
         if 'order' in request.form:
-            orderBy = request.form['orderBy']
-            command = "SELECT id as Number, name as Name, is_available as Availability FROM couriers ORDER BY "+str(orderBy)
-            print(command)
-            cursor.execute(command)
-            query = cursor.fetchall()
-            data["couriers"] = query
-            
+            orderBy = request.form['orderBy'].lower()
+
+            if session["isFiltered"] == False:
+                command = "SELECT id as Number, name as Name, is_available as Availability FROM couriers ORDER BY "+str(orderBy)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["users"] = query
+            else:
+                df = pd.DataFrame(session["filteredData"]["couriers"],
+                                  columns=['number', 'name','availability'])
+                df = df.sort_values(by=orderBy)
+                session["filteredData"]["couriers"] = df.values.tolist()
+
         if 'filter' in request.form:
             filtered_cols, expected_vals = [], []
             q = ""
@@ -384,9 +410,6 @@ def allCouriers():
                     else:
                         filtered_cols.append(c)
                         expected_vals.append(request.form[c])
-
-            print(expected_vals)
-            print(filtered_cols)
 
             if len(expected_vals) > 0:
                 if filtered_cols[0] != "is_available":
@@ -404,14 +427,16 @@ def allCouriers():
                 command = "SELECT id as Number, name as Name, is_available as Availability FROM couriers WHERE "+q
                 cursor.execute(command)
                 query = cursor.fetchall()
-                data["couriers"] = query
+                session["filteredData"]["couriers"] = query
             else:
-                data = getAllDbData(toGet=["couriers"])
+                session["filteredData"] = getAllDbData(toGet=["couriers"])
+            session["isFiltered"] = True
+
     else:
-        data = getAllDbData(toGet=["couriers"])
+        session["filteredData"] = getAllDbData(toGet=["couriers"])
+        session["isFiltered"] = False
 
-    return render_template("admin/list_operations/list_couriers.html", username=session["username"], data=data)
-
+    return render_template("admin/list_operations/list_couriers.html", username=session["username"], data=session["filteredData"])
 
 @app.route("/selectRestaurant", methods=["GET", "POST"])
 def selectRestaurant():
@@ -495,11 +520,21 @@ def getRestaurants(cursor, limit=None):
 
     return query
 
+def getMenus(cursor, limit=None):
+    cursor.execute("SELECT id, menuName, restaurantId FROM menu ORDER BY id desc")
+    query = cursor.fetchall()
+
+    return query
+
+def getRestaurantName(cursor, limit=None):
+    cursor.execute("SELECT restaurantName FROM restaurant")
+    query = cursor.fetchall()
+
+    return query
 
 def getAllDbData(toGet, limit=None):
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
-
     data = {}
     for entity in toGet:
         if entity == "couriers":
@@ -508,6 +543,10 @@ def getAllDbData(toGet, limit=None):
             data[entity] = getUsers(cursor, limit)
         if entity == "restaurant":
             data[entity] = getRestaurants(cursor, limit)
+        if entity == "menu":
+            data[entity] = getMenus(cursor, limit)
+        if entity == "restaurantName":
+            data[entity] = getRestaurantName(cursor, limit)
         else:
             pass
     return data
