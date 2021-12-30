@@ -18,16 +18,18 @@ with sqlite3.connect(DATABASE) as database:
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS couriers(id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate Date DEFAULT (datetime('now','localtime')),totalPrice INTEGER)")
-
     cursor.execute("CREATE TABLE IF NOT EXISTS extra(id INTEGER PRIMARY KEY,name varchar(200), price INTEGER)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id INTEGER PRIMARY KEY,menuName varchar(30), price INTEGER)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id INTEGER PRIMARY KEY,menuName varchar(30), price INTEGER, content TEXT)")
 
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY, restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
 
+    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate Date DEFAULT (datetime('now','localtime')),totalPrice INTEGER, is_delivered INTEGER DEFAULT(0), restaurantId INTEGER, FOREIGN KEY(restaurantId) REFERENCES restaurant(id))")
+
+    
     cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate datetime)")
+    
     '''
     cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId INTEGER,menuId int,PRIMARY KEY(orderId,menuId),"
                    "FOREIGN KEY (orderId) REFERENCES foodOrder(id),FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE)")
@@ -137,10 +139,23 @@ def registerView():
 
 @app.route("/home", methods=["GET", "POST"])
 def homeView():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        confirmedOrderId = request.form["confirmedOrder"]
+
+        cursor.execute("UPDATE couriers SET is_available = 1, orderId = NULL, "
+                       "lat = (SELECT users.lat FROM users, foodOrder WHERE users.username = foodOrder.userUserName and foodOrder.id = (?)),"
+                       "lng = (SELECT users.lng FROM users, foodOrder WHERE users.username = foodOrder.userUserName and foodOrder.id = (?))"
+                       "WHERE id = (SELECT id FROM couriers WHERE couriers.orderId=(?))", (confirmedOrderId,confirmedOrderId,confirmedOrderId))
+        cursor.execute("UPDATE foodOrder SET is_delivered = 1 WHERE foodOrder.id=(?)", (confirmedOrderId,))
+        database.commit()
+
     if not session.get('logged_in'):
         return render_template('auth/login.html', title='Login')
     if session["user_type"] == 1:
-        data = getAllDbData(toGet=["users", "restaurant", "couriers", "menu", "restaurantName"], limit=4)
+        data = getAllDbData(toGet=["users", "restaurant", "couriers", "menu", "restaurantName","orders"], limit=5)
         session["isFiltered"], session["filteredData"] = False, {}
 
         return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
@@ -253,10 +268,10 @@ def addMenu():
         menuName = request.form["Menu"]
         restaurantName = request.form["Restaurant"]
         price = request.form["Price"]
+        content = request.form["Content"]
 
-
-        cursor.execute("INSERT INTO menu(menuName, restaurantId, price) VALUES(?, (SELECT id FROM restaurant WHERE restaurantName = (?)), ?)",
-                       (menuName, restaurantName, price))
+        cursor.execute("INSERT INTO menu(menuName, price, content, restaurantId) VALUES(?, ?, ?, (SELECT id FROM restaurant WHERE restaurantName = (?)))",
+                       (menuName, price, content, restaurantName))
         database.commit()
         return redirect(url_for("loginView", title="Home"))
 
@@ -458,12 +473,6 @@ def selectRestaurant():
     data = query
     session["menus"] = []
 
-    command = "SELECT id,name,price FROM extra"
-    cursor.execute(command)
-    query = cursor.fetchall()
-
-    session["extras"] = query
-
     return render_template('user/selectRestaurant.html', title='Restaurants', username=session["username"], data=data)
 
 @app.route("/selectMenu", methods=["GET", "POST"])
@@ -471,14 +480,20 @@ def selectMenu():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
-    if request.method == "POST":
-        if "selectedRestaurantId" in request.form.keys():
-            selectedRestaurantId = request.form["selectedRestaurantId"]
+    command = "SELECT id,name,price FROM extra"
+    cursor.execute(command)
+    query = cursor.fetchall()
+    session["extras"] = query
 
-            command = "SELECT id,menuName,restaurantId,price FROM menu WHERE restaurantId="+selectedRestaurantId
+    if request.method == "POST":
+        print(request.form)
+        if "selectedRestaurant" in request.form.keys():
+            selectedRestaurantId = request.form["selectedRestaurant"]
+
+            command = "SELECT id,menuName,restaurantId,price,content FROM menu WHERE restaurantId="+selectedRestaurantId
             cursor.execute(command)
             query = cursor.fetchall()
-
+            print(selectedRestaurantId)
             session["menus"] = query
 
         if "selectedMenu" in request.form.keys():
@@ -486,7 +501,7 @@ def selectMenu():
             command = "SELECT restaurantId FROM menu WHERE id=" + str(f"'{selected}'")
             cursor.execute(command)
             selectedRestaurantId = cursor.fetchall()[0][0]
-            command = "SELECT id,menuName,restaurantId,price FROM menu WHERE restaurantId=" + str(f"'{selectedRestaurantId}'")
+            command = "SELECT id,menuName,restaurantId,price,content FROM menu WHERE restaurantId=" + str(f"'{selectedRestaurantId}'")
             cursor.execute(command)
             query = cursor.fetchall()
 
@@ -508,6 +523,7 @@ def confirmOrder():
         "menus":{
         "menuNames": list(),
         "menuPrices": list(),
+        "menuRestaurantId": list(),
         },
         "extras":{
         "extraNames": list(),
@@ -516,6 +532,7 @@ def confirmOrder():
         "totalCost": 0
     }
     username = str(session["username"])
+    
 
     if request.method == "POST":
         if len(request.form.getlist("extra")) > 0:
@@ -527,16 +544,15 @@ def confirmOrder():
                 order["extras"]["extraPrices"].append(query[1])
                 order["totalCost"] += int(query[1])
 
-        if len(request.form.getlist("selectedMenu")) > 0:
-            for menu in request.form.getlist("selectedMenu"):
-                command = "SELECT menuName,price FROM menu WHERE menuName=" + f"'{str(menu)}'"
+        if len(request.form.getlist("selectedMenuId")) > 0:
+            for menu in request.form.getlist("selectedMenuId"):
+                command = "SELECT menuName,price,restaurantId FROM menu WHERE id=" + menu
                 cursor.execute(command)
                 query = cursor.fetchall()[0]
                 order["menus"]["menuNames"].append(query[0])
                 order["menus"]["menuPrices"].append(query[1])
+                order["menus"]["menuRestaurantId"].append(query[2])
                 order["totalCost"] += int(query[1])
-
-        print("Order", order)
 
         command = "SELECT lat,lng FROM users WHERE username=" + f"'{str(username)}'"
         cursor.execute(command)
@@ -545,13 +561,15 @@ def confirmOrder():
         command = "SELECT lat-"+str(query[0])+"+lng-"+str(query[1])+" as distance, id as courierID FROM couriers WHERE is_available=1 ORDER BY distance asc LIMIT 1";
         cursor.execute(command)
         query = cursor.fetchall()[0]
-        print("Courier:",query)
+        
 
         content = ""
         content += str(order["menus"]["menuNames"])
         content += str(order["extras"]["extraNames"])
 
-        cursor.execute("INSERT INTO foodOrder(content, totalPrice, courierID, userUserName) VALUES (?,?,?,?)",(content, str(order["totalCost"]),query[1], username))
+        orderContent = orderArrayToStr(content)
+
+        cursor.execute("INSERT INTO foodOrder(content, totalPrice, courierID, userUserName) VALUES (?,?,?,?)",(orderContent, str(order["totalCost"]),query[1], username))
         database.commit()
 
         cursor.execute("SELECT id FROM foodOrder ORDER BY id DESC LIMIT 1")
@@ -573,18 +591,19 @@ def getUserViewData():
     lat, lng = query[0], query[1]
 
     # fetch user's orders
-    cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name "
+    cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered "
                    "FROM foodOrder INNER JOIN couriers WHERE couriers.id = foodOrder.courierID and foodOrder.userUserName=(?)", (session["username"],))
     orders = cursor.fetchall()
 
     # fetch cheapest menus
-    cursor.execute("SELECT restaurant.restaurantName, restaurant.address, menu.menuName, menu.price, menu.id, restaurant.id "
+    cursor.execute("SELECT restaurant.restaurantName, restaurant.address, menu.menuName, menu.price, menu.id, restaurant.id, menu.content "
                    "FROM menu INNER JOIN restaurant WHERE menu.restaurantId = restaurant.id ORDER BY price ASC LIMIT 5")
     cheap_menus = cursor.fetchall()
 
     # fetch near restaurants
     cursor.execute("SELECT lat-(?)+lng-(?) as distance,* FROM restaurant WHERE isOpen = 1 ORDER BY distance asc LIMIT 5", (lat, lng))
     near_restaurants = cursor.fetchall()
+
 
     info = {
         "orders":orders,
@@ -595,12 +614,22 @@ def getUserViewData():
 
 @app.route("/exit", methods=["GET"])
 def exit():
-    session["username"] = None
-    session["logged_in"] = False
-    session["user_type"] = None
+    session.clear()
 
     return redirect('/')
 
+@app.route("/courierDetail", methods=["GET"])
+def courierDetail():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    couirerID = request.args.get('courier', default=1, type=int)
+    cursor.execute("SELECT couriers.id,  couriers.name, is_available, couriers.lat, couriers.lng, foodOrder.is_delivered, foodOrder.orderDate, users.username "
+                   "FROM couriers INNER JOIN users,foodOrder "
+                   "WHERE couriers.id = (?) and foodOrder.courierID = (?) and foodOrder.userUserName = users.username", (couirerID,couirerID))
+    query = cursor.fetchall()
+
+    return render_template("admin/list_operations/courier_detail.html", username=session["username"], data=query)
 
 def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):
     session["username"] = username
@@ -654,12 +683,21 @@ def getRestaurants(cursor, limit=None):
     return query
 
 def getMenus(cursor, limit=None):
-    cursor.execute("SELECT id, menuName, restaurantId, price FROM menu ORDER BY id desc")
+    cursor.execute("SELECT id, menuName, restaurantId, price, content FROM menu ORDER BY id desc")
     query = cursor.fetchall()
     return query
 
+def getOrders(cursor, limit=None):
+    cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurantId "
+                   "FROM foodOrder INNER JOIN couriers WHERE foodOrder.courierID = couriers.id")
+
+    query = cursor.fetchall()
+    return query
+
+
 def getRestaurantName(cursor, limit=None):
-    cursor.execute("SELECT restaurantName FROM restaurant")
+    cursor.execute("SELECT restaurant.restaurantName, menu.menuName, menu.price, menu.id, restaurant.id, menu.content "
+                   "FROM menu INNER JOIN restaurant WHERE menu.restaurantId = restaurant.id")
     query = cursor.fetchall()
 
     return query
@@ -679,10 +717,18 @@ def getAllDbData(toGet, limit=None):
             data[entity] = getMenus(cursor, limit)
         if entity == "restaurantName":
             data[entity] = getRestaurantName(cursor, limit)
+        if entity == "orders":
+            data[entity] = getOrders(cursor, limit)
         else:
             pass
     return data
 
+def orderArrayToStr(str):
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    orderstr = ''.join(str).replace("[","").replace("]","").replace("'","")
+    return orderstr
 
 if __name__ == '__main__':
     app.run(debug=True)
