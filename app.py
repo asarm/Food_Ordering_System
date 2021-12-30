@@ -547,12 +547,13 @@ def confirmOrder():
             for menu in request.form.getlist("selectedMenu"):
                 command = "SELECT menuName,price,restaurantId,id FROM menu WHERE menuName=" + f"'{str(menu)}'"
                 cursor.execute(command)
-                query = cursor.fetchall()[0]
-                if str(query[3]) in request.form.getlist("selectedMenuId"):
-                    order["menus"]["menuNames"].append(query[0])
-                    order["menus"]["menuPrices"].append(query[1])
-                    order["menus"]["menuRestaurantId"].append(query[2])
-                    order["totalCost"] += int(query[1])
+                query = cursor.fetchall()
+                for q in query:
+                    if str(q[3]) in request.form.getlist("selectedMenuId"):
+                        order["menus"]["menuNames"].append(q[0])
+                        order["menus"]["menuPrices"].append(q[1])
+                        order["menus"]["menuRestaurantId"].append(q[2])
+                        order["totalCost"] += int(q[1])
 
         command = "SELECT lat,lng FROM users WHERE username=" + f"'{str(username)}'"
         cursor.execute(command)
