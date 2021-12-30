@@ -462,6 +462,59 @@ def allMenus():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    if request.method == "POST":
+        if 'order' in request.form:
+            orderBy = request.form['orderBy'].lower()
+
+            if session["isFiltered"] == False:
+                command = "SELECT menuName as Name, price, content, restaurantId FROM menu ORDER BY "+str(orderBy)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["menu"] = query
+            else:
+                df = pd.DataFrame(session["filteredData"]["menu"],
+                                  columns=['name', 'price','content', 'restaurantId'])
+                df = df.sort_values(by=orderBy)
+                session["filteredData"]["menu"] = df.values.tolist()
+
+        if 'filter' in request.form:
+            filtered_cols, expected_vals = [], []
+            q = ""
+
+            for c in request.form.keys():
+                if request.form[c] != '' and request.form[c] != "filter":
+                    if request.form[c] == "on":
+                        filtered_cols.append("is_available")
+                        expected_vals.append(1)
+                    else:
+                        filtered_cols.append(c)
+                        expected_vals.append(request.form[c])
+
+            if len(expected_vals) > 0:
+                if filtered_cols[0] != "is_available":
+                    q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
+                else:
+                    q += " is_available = 1"
+
+                if len(expected_vals) > 1:
+                    for index in range(1, len(expected_vals)):
+                        if filtered_cols[index] != "is_available":
+                            q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
+                    if filtered_cols.count("is_available") > 0:
+                        q += " and is_available = 1"
+
+                command = "SELECT menuName as Name, price, content, restaurantId FROM menu WHERE "+q
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["menu"] = query
+            else:
+                session["filteredData"] = getAllDbData(toGet=["menu"])
+            session["isFiltered"] = True
+
+    else:
+        session["filteredData"] = getAllDbData(toGet=["menu"])
+        session["isFiltered"] = False
+
     return render_template("admin/list_operations/list_menus.html", username=session["username"], data=session["filteredData"])
 
 @app.route("/selectRestaurant", methods=["GET", "POST"])
@@ -545,15 +598,18 @@ def confirmOrder():
 
         if len(request.form.getlist("selectedMenu")) > 0:
             for menu in request.form.getlist("selectedMenu"):
-                command = "SELECT menuName,price,restaurantId,id FROM menu WHERE menuName=" + f"'{str(menu)}'"
+                command = "SELECT menu.menuName, menu.price, menu.id, restaurant.id, restaurant.restaurantName FROM menu, restaurant WHERE menu.restaurantId = restaurant.id and menu.menuName=" + f"'{str(menu)}'" 
                 cursor.execute(command)
                 query = cursor.fetchall()
                 for q in query:
-                    if str(q[3]) in request.form.getlist("selectedMenuId"):
+                    if str(q[2]) in request.form.getlist("selectedMenuId"):
                         order["menus"]["menuNames"].append(q[0])
                         order["menus"]["menuPrices"].append(q[1])
-                        order["menus"]["menuRestaurantId"].append(q[2])
+                        order["menus"]["menuRestaurantId"].append(q[3])
                         order["totalCost"] += float(q[1])
+
+                
+                print(order)
 
         command = "SELECT lat,lng FROM users WHERE username=" + f"'{str(username)}'"
         cursor.execute(command)
@@ -570,7 +626,7 @@ def confirmOrder():
 
         orderContent = orderArrayToStr(content)
 
-        cursor.execute("INSERT INTO foodOrder(content, totalPrice, courierID, userUserName) VALUES (?,?,?,?)",(orderContent, str(order["totalCost"]),query[1], username))
+        cursor.execute("INSERT INTO foodOrder(content, totalPrice, restaurantId, courierID, userUserName) VALUES (?,?,?,?,?)",(orderContent, str(order["totalCost"]),order["menus"]["menuRestaurantId"][0],query[1], username))
         database.commit()
 
         cursor.execute("SELECT id FROM foodOrder ORDER BY id DESC LIMIT 1")
@@ -593,12 +649,12 @@ def getUserViewData():
 
     # fetch user's orders
     cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered "
-                   "FROM foodOrder INNER JOIN couriers WHERE couriers.id = foodOrder.courierID and foodOrder.userUserName=(?)", (session["username"],))
+                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?)", (session["username"],))
     orders = cursor.fetchall()
 
     # fetch cheapest menus
     cursor.execute("SELECT restaurant.restaurantName, restaurant.address, menu.menuName, menu.price, menu.id, restaurant.id, menu.content "
-                   "FROM menu INNER JOIN restaurant WHERE menu.restaurantId = restaurant.id ORDER BY price ASC LIMIT 5")
+                   "FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY price ASC LIMIT 5")
     cheap_menus = cursor.fetchall()
 
     # fetch near restaurants
@@ -628,7 +684,7 @@ def courierDetail():
 
     cursor.execute("SELECT couriers.id,  couriers.name, is_available, couriers.lat, couriers.lng, foodOrder.is_delivered, foodOrder.orderDate, users.username "
                    "FROM couriers INNER JOIN users,foodOrder "
-                   "WHERE couriers.id = (?) and foodOrder.courierID = (?) and foodOrder.userUserName = users.username", (couirerID,couirerID))
+                   "ON couriers.id = (?) and foodOrder.courierID = (?) and foodOrder.userUserName = users.username", (couirerID,couirerID))
     query = cursor.fetchall()
 
     return render_template("admin/list_operations/courier_detail.html", username=session["username"], data=query)
@@ -685,13 +741,13 @@ def getRestaurants(cursor, limit=None):
     return query
 
 def getMenus(cursor, limit=None):
-    cursor.execute("SELECT id, menuName, restaurantId, price, content FROM menu ORDER BY id desc")
+    cursor.execute("SELECT menu.id, menuName, price, content, restaurant.restaurantName FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY menu.id desc")
     query = cursor.fetchall()
     return query
 
 def getOrders(cursor, limit=None):
-    cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurantId "
-                   "FROM foodOrder INNER JOIN couriers WHERE foodOrder.courierID = couriers.id")
+    cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
+                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id")
 
     query = cursor.fetchall()
     return query
@@ -699,7 +755,7 @@ def getOrders(cursor, limit=None):
 
 def getRestaurantName(cursor, limit=None):
     cursor.execute("SELECT restaurant.restaurantName, menu.menuName, menu.price, menu.id, restaurant.id, menu.content "
-                   "FROM menu INNER JOIN restaurant WHERE menu.restaurantId = restaurant.id")
+                   "FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id")
     query = cursor.fetchall()
 
     return query

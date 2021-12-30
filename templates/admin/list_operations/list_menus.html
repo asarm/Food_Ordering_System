@@ -16,5 +16,83 @@
 {% endblock %}
 
 {% block body %}
+<p>
+  <a class="btn btn-success" data-toggle="collapse" href="#filter" role="button" aria-expanded="false" aria-controls="filter">Filter</a>
+  <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#order" aria-expanded="false" aria-controls="order">Order</button>
+</p>
 
+<div class="row">
+  <div class="col">
+    <div class="collapse multi-collapse" id="filter">
+      <div class="card card-body">
+       <form action="/menus" method="POST">
+           <div class="form-group">
+            <label for="exampleInputEmail1">By Name</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="restaurantName" placeholder="Enter Name">
+          </div>
+          <div class="form-group">
+            <label for="exampleInputEmail1">By Price</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="address" placeholder="Enter Address">
+          </div>
+          <div class="form-group">
+            <label for="exampleInputEmail1">By Content</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="averageRating" placeholder="Enter Average Rating">
+          </div>
+          <div class="form-group">
+            <label for="exampleInputEmail1">By Restaurant Name</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="averageRating" placeholder="Enter Average Rating">
+          </div>
+          <button type="submit" name="filter" value="filter" class="btn btn-success">Filter</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="collapse multi-collapse" id="order">
+      <div class="card card-body">
+        <form action="/restaurants" method="POST">
+            <div class="row">
+                <div class="col-md-1">
+                    By
+                </div>
+                <div class="col-md-2">
+                    <select class="form-control" id="orderBy" name="orderBy">
+                      <option>Name</option>
+                      <option>Price</option>
+                      <option>Content</option>
+                      <option>Restaurant Name</option>
+                   </select>
+                </div>
+           </div>
+          <button type="submit" name="order" value="order" class="btn btn-secondary">Order</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div>
+    <table class="table">
+      <thead class="thead-dark">
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Price</th>
+            <th scope="col">Content</th>
+            <th scope="col">Restaurant Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%for i in range(data["menu"]|length)%}
+                <tr>
+                  <th scope="row">{{ i+1 }}</th>
+                  <td>{{ data["menu"][i][1] }}</td>
+                  <td>{{ data["menu"][i][2] }}$</td>
+                  <td>{{ data["menu"][i][3] }}</td>
+                  <td>{{ data["menu"][i][4] }}</td>
+                </tr>
+        {%endfor%}
+      </tbody>
+    </table>
+</div>
 {% endblock %}
