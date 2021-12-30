@@ -541,7 +541,7 @@ def confirmOrder():
                 query = cursor.fetchall()[0]
                 order["extras"]["extraNames"].append(query[0])
                 order["extras"]["extraPrices"].append(query[1])
-                order["totalCost"] += int(query[1])
+                order["totalCost"] += float(query[1])
 
         if len(request.form.getlist("selectedMenu")) > 0:
             for menu in request.form.getlist("selectedMenu"):
@@ -553,7 +553,7 @@ def confirmOrder():
                         order["menus"]["menuNames"].append(q[0])
                         order["menus"]["menuPrices"].append(q[1])
                         order["menus"]["menuRestaurantId"].append(q[2])
-                        order["totalCost"] += int(q[1])
+                        order["totalCost"] += float(q[1])
 
         command = "SELECT lat,lng FROM users WHERE username=" + f"'{str(username)}'"
         cursor.execute(command)
