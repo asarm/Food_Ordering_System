@@ -532,7 +532,6 @@ def confirmOrder():
         "totalCost": 0
     }
     username = str(session["username"])
-    
 
     if request.method == "POST":
         if len(request.form.getlist("extra")) > 0:
@@ -544,15 +543,16 @@ def confirmOrder():
                 order["extras"]["extraPrices"].append(query[1])
                 order["totalCost"] += int(query[1])
 
-        if len(request.form.getlist("selectedMenuId")) > 0:
-            for menu in request.form.getlist("selectedMenuId"):
-                command = "SELECT menuName,price,restaurantId FROM menu WHERE id=" + menu
+        if len(request.form.getlist("selectedMenu")) > 0:
+            for menu in request.form.getlist("selectedMenu"):
+                command = "SELECT menuName,price,restaurantId,id FROM menu WHERE menuName=" + f"'{str(menu)}'"
                 cursor.execute(command)
                 query = cursor.fetchall()[0]
-                order["menus"]["menuNames"].append(query[0])
-                order["menus"]["menuPrices"].append(query[1])
-                order["menus"]["menuRestaurantId"].append(query[2])
-                order["totalCost"] += int(query[1])
+                if str(query[3]) in request.form.getlist("selectedMenuId"):
+                    order["menus"]["menuNames"].append(query[0])
+                    order["menus"]["menuPrices"].append(query[1])
+                    order["menus"]["menuRestaurantId"].append(query[2])
+                    order["totalCost"] += int(query[1])
 
         command = "SELECT lat,lng FROM users WHERE username=" + f"'{str(username)}'"
         cursor.execute(command)
@@ -624,6 +624,7 @@ def courierDetail():
         cursor = database.cursor()
 
     couirerID = request.args.get('courier', default=1, type=int)
+
     cursor.execute("SELECT couriers.id,  couriers.name, is_available, couriers.lat, couriers.lng, foodOrder.is_delivered, foodOrder.orderDate, users.username "
                    "FROM couriers INNER JOIN users,foodOrder "
                    "WHERE couriers.id = (?) and foodOrder.courierID = (?) and foodOrder.userUserName = users.username", (couirerID,couirerID))
