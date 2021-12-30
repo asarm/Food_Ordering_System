@@ -18,14 +18,14 @@ with sqlite3.connect(DATABASE) as database:
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS couriers(id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS extra(id INTEGER PRIMARY KEY,name varchar(200), price INTEGER)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS extra(id INTEGER PRIMARY KEY,name varchar(200), price REAL)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id INTEGER PRIMARY KEY,menuName varchar(30), price INTEGER, content TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS menu(id INTEGER PRIMARY KEY,menuName varchar(30), price REAL, content TEXT)")
 
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY, restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate Date DEFAULT (datetime('now','localtime')),totalPrice INTEGER, is_delivered INTEGER DEFAULT(0), restaurantId INTEGER, FOREIGN KEY(restaurantId) REFERENCES restaurant(id))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate Date DEFAULT (datetime('now','localtime')),totalPrice REAL, is_delivered INTEGER DEFAULT(0), restaurantId INTEGER, FOREIGN KEY(restaurantId) REFERENCES restaurant(id))")
 
     
     cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate datetime)")
