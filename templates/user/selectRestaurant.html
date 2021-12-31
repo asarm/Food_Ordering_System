@@ -45,9 +45,9 @@
                 <button type="submit" name="selectedRestaurant" value='{{ data["restaurant"][i][4] }}' class="btn btn-success">Select</button>
             </td>
            {% if data["restaurant"][i][4] in reviewedRests %}
-               <td><a href="" class="btn btn-danger">Review</a></td>
+               <td><a href="\reviewRestaurant" class="btn btn-danger">Review</a></td>
            {% else %}
-               <td><a href="" class="btn btn-danger" hidden disabled>Review</a></td>
+               <td><a href="\reviewRestaurant" class="btn btn-danger" hidden disabled>Review</a></td>
            {% endif %}
           </tr>
         {%endfor%}

@@ -25,7 +25,7 @@ with sqlite3.connect(DATABASE) as database:
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY, restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate Date DEFAULT (datetime('now','localtime')),totalPrice REAL, is_delivered INTEGER DEFAULT(0), restaurantId INTEGER, FOREIGN KEY(restaurantId) REFERENCES restaurant(id))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate Date DEFAULT (datetime('now','localtime')),totalPrice REAL, is_delivered INTEGER DEFAULT(0), is_reviewed INTEGER DEFAULT(0), restaurantId INTEGER, FOREIGN KEY(restaurantId) REFERENCES restaurant(id))")
 
     
     cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate datetime)")
@@ -764,6 +764,16 @@ def courierDetail():
         query = cursor.fetchall()
         print("Detail:",query)
     return render_template("admin/list_operations/courier_detail.html", username=session["username"], data=query, totalOrder=totalCourierOrder)
+
+@app.route("/reviewRestaurant", methods=["GET"])
+def reviewRestaurant():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+        
+
+    return render_template("user/reviewRestaurant.html", username=session["username"])
+
 
 def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):
     session["username"] = username
