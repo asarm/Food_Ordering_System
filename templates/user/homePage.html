@@ -93,6 +93,7 @@
          <table class="table table-hover">
               <thead>
                 <tr>
+                  <th scope="col">Restaurant Name</th>
                   <th scope="col">Total Price</th>
                   <th scope="col">Courier Name</th>
                   <th scope="col">Order Content</th>
@@ -103,6 +104,7 @@
               <tbody>
               {%for i in range(data["orders"]|length)%}
                 <tr>
+                  <td>{{ data["orders"][i][6] }} </td>
                   <td>{{ data["orders"][i][0] }} $</td>
                   <td>{{ data["orders"][i][2] }}</td>
                   <td>{{ data["orders"][i][3] }}</td>

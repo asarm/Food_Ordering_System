@@ -72,22 +72,26 @@
       <thead class="thead-dark">
         <tr>
             <th scope="col">#</th>
-            <th scope="col">Content</th>
+            <th scope="col">Username</th>
+            <th scope="col">Restaurant</th>
+            <th scope="col">Order</th>
+            <th scope="col">Price</th>
+            <th scope="col">Courier Name</th>
             <th scope="col">Date</th>
             <th scope="col">Delivered</th>
-            <th scope="col">Price</th>
-            <th scope="col">Customer</th>
         </tr>
       </thead>
       <tbody>
         {%for i in range(data["orders"]|length)%}
                 <tr>
                   <th scope="row">{{ i+1 }}</th>
-                  <td>{{ data["orders"][i][0] }}</td>
-                  <td>{{ data["orders"][i][2] }}</td>
-                  <td>{{ data["orders"][i][3] }}</td>
-                  <td>{{ data["orders"][i][4] }}</td>
+                  <td>{{ data["orders"][i][6] }}</td>
+                  <td>{{ data["orders"][i][7] }}</td>
+                  <td>{{ data["orders"][i][1] }}</td>
+                  <td>{{ data["orders"][i][3] }}$</td>
                   <td>{{ data["orders"][i][5] }}</td>
+                  <td>{{ data["orders"][i][2] }}</td>
+                  <td>{{ data["orders"][i][4] }}</td>
                 </tr>
         {%endfor%}
       </tbody>

@@ -714,8 +714,8 @@ def getUserViewData():
     lat, lng = query[0], query[1]
 
     # fetch user's orders
-    cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered "
-                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?)", (session["username"],))
+    cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered, restaurant.restaurantName "
+                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?) INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id", (session["username"],))
     orders = cursor.fetchall()
 
     # fetch cheapest menus
@@ -822,7 +822,8 @@ def getMenus(cursor, limit=None):
     return query
 
 def getOrders(cursor, limit=None):
-    cursor.execute("SELECT * FROM foodOrder ORDER BY orderDate desc ")
+    cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
+                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id")
 
     query = cursor.fetchall()
     return query
