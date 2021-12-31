@@ -28,34 +28,40 @@
             Yes
         {% endif %}
     </div><br>
-    <div style="padding-left: 15px">
-        <h3>Recent Activities</h3>
-    </div>
-    <table class="table">
-      <thead class="thead-dark">
-        <tr>
-            <th scope="col">#</th>
-            <th scope="col">Order ID</th>
-            <th scope="col">Order Date</th>
-            <th scope="col">Customer Name</th>
-            <th scope="col">Is Delivered</th>
-            <th scope="col"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {%for i in range(data|length)%}
-                <tr>
-                  <th scope="row">{{ i+1 }}</th>
-                  <td>{{ data[i][0] }}</td>
-                  <td>{{ data[i][6] }}</td>
-                  <td>{{ data[i][7] }}</td>
-                    {% if data[i][2] == '0' %}
-                        <td>No</td>
-                    {% else %}
-                        <td>Yes</td>
-                    {% endif %}
-                </tr>
-        {%endfor%}
-      </tbody>
-    </table>
+    {% if totalOrder != 0 %}
+        <div style="padding-left: 15px">
+            <h3>Recent Activities</h3>
+        </div>
+        <table class="table">
+          <thead class="thead-dark">
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Order ID</th>
+                <th scope="col">Order Date</th>
+                <th scope="col">Customer Name</th>
+                <th scope="col">Is Delivered</th>
+                <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {%for i in range(data|length)%}
+                    <tr>
+                      <th scope="row">{{ i+1 }}</th>
+                      <td>{{ data[i][8] }}</td>
+                      <td>{{ data[i][6] }}</td>
+                      <td>{{ data[i][7] }}</td>
+                        {% if data[i][2] == '0' %}
+                            <td>No</td>
+                        {% else %}
+                            <td>Yes</td>
+                        {% endif %}
+                    </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+    {% else %}
+        <div style="padding-left: 15px">
+            <h5>Couirer Does Not Have Any Previous Order</h5>
+        </div>
+    {% endif %}
 {% endblock %}

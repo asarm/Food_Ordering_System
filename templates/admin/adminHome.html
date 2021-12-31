@@ -20,7 +20,7 @@
  <div class="row mt-3">
      <div class="col-md-6" style="z-index: 0;">
          <ul class="list-group">
-          <li class="list-group-item active">Recent Orders <button class="btn btn-sm btn-success" id="See All Orders">See All</button> 
+          <li class="list-group-item active">Recent Orders <a href="/orders" class="btn btn-sm btn-success" id="See All Orders">See All</a>
           </li>
           <li class="list-group-item">
             <table class="table table-hover">
@@ -36,8 +36,8 @@
               <tbody>
               {%for i in range(data["orders"]|length)%}
                 <tr>
-                  <td>{{ data["orders"][i][6] }}</td>
                   <td>{{ data["orders"][i][7] }}</td>
+                  <td>{{ data["orders"][i][8] }}</td>
                   <td>{{ data["orders"][i][1] }}</td>
                   <td>{{ data["orders"][i][5] }}</td>
                   <td>{{ data["orders"][i][2] }}</td>

@@ -517,6 +517,70 @@ def allMenus():
 
     return render_template("admin/list_operations/list_menus.html", username=session["username"], data=session["filteredData"])
 
+@app.route("/orders", methods=["GET", "POST"])
+def allOrders():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        if 'order' in request.form:
+            orderBy = request.form['orderBy']
+
+            if session["isFiltered"] == False:
+                command = "SELECT id,content,orderDate,is_delivered,totalPrice,userUserName FROM foodOrder ORDER BY "+str(orderBy)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["orders"] = query
+            else:
+                print(pd.DataFrame(session["filteredData"]["orders"]))
+                df = pd.DataFrame(session["filteredData"]["orders"],
+                                  columns=['id','content', 'orderDate','is_delivered','totalPrice','userUserName'])
+                df = df.sort_values(by=orderBy)
+                session["filteredData"]["orders"] = df.values.tolist()
+
+        if 'filter' in request.form:
+            filtered_cols, expected_vals = [], []
+            q = ""
+
+            for c in request.form.keys():
+                if request.form[c] != '' and request.form[c] != "filter":
+                    if request.form[c] == "on":
+                        filtered_cols.append("is_delivered")
+                        expected_vals.append(1)
+                    else:
+                        filtered_cols.append(c)
+                        expected_vals.append(request.form[c])
+
+            if len(expected_vals) > 0:
+                if filtered_cols[0] != "is_delivered" and filtered_cols[0] != "maxprice" and filtered_cols[0] != "minprice":
+                    q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
+                else:
+                    q += " is_delivered = 1"
+
+                if len(expected_vals) > 1:
+                    for index in range(1, len(expected_vals)):
+                        if filtered_cols[index] != "is_delivered":
+                            q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
+                    if filtered_cols.count("is_delivered") > 0:
+                        q += " and is_delivered = 1"
+
+                command = "SELECT id,content,orderDate,is_delivered,totalPrice,userUserName FROM foodOrder WHERE " + q
+                print(command)
+
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["orders"] = query
+            else:
+                session["filteredData"] = getAllDbData(toGet=["order"])
+            session["isFiltered"] = True
+
+    else:
+        session["filteredData"] = getAllDbData(toGet=["orders"])
+        session["isFiltered"] = False
+
+    return render_template("admin/list_operations/list_orders.html", username=session["username"],
+                           data=session["filteredData"])
+
 @app.route("/selectRestaurant", methods=["GET", "POST"])
 def selectRestaurant():
     with sqlite3.connect(DATABASE) as database:
@@ -526,7 +590,9 @@ def selectRestaurant():
     data = query
     session["menus"] = []
 
-    return render_template('user/selectRestaurant.html', title='Restaurants', username=session["username"], data=data)
+    reviewedRests = canReview(cursor)
+
+    return render_template('user/selectRestaurant.html', title='Restaurants', username=session["username"], data=data, reviewedRests=reviewedRests)
 
 @app.route("/selectMenu", methods=["GET", "POST"])
 def selectMenu():
@@ -682,12 +748,22 @@ def courierDetail():
 
     couirerID = request.args.get('courier', default=1, type=int)
 
-    cursor.execute("SELECT couriers.id,  couriers.name, is_available, couriers.lat, couriers.lng, foodOrder.is_delivered, foodOrder.orderDate, users.username "
-                   "FROM couriers INNER JOIN users,foodOrder "
-                   "ON couriers.id = (?) and foodOrder.courierID = (?) and foodOrder.userUserName = users.username", (couirerID,couirerID))
-    query = cursor.fetchall()
+    command = "SELECT count(*) FROM foodOrder WHERE foodOrder.courierID ="+str(couirerID)
+    cursor.execute(command)
+    totalCourierOrder = int(cursor.fetchall()[0][0])
 
-    return render_template("admin/list_operations/courier_detail.html", username=session["username"], data=query)
+    if totalCourierOrder == 0:
+        cursor.execute("SELECT couriers.id,  couriers.name, is_available, couriers.lat, couriers.lng FROM couriers WHERE couriers.id = (?)", (couirerID,))
+        query = cursor.fetchall()
+        print("Detail:",query)
+    else:
+        cursor.execute("SELECT couriers.id, couriers.name, is_available, couriers.lat, couriers.lng, foodOrder.is_delivered, foodOrder.orderDate, users.username, foodOrder.id "
+                       "FROM couriers INNER JOIN users,foodOrder ON couriers.id = (?) and foodOrder.courierID = (?) and foodOrder.userUserName = users.username", (couirerID,couirerID))
+
+
+        query = cursor.fetchall()
+        print("Detail:",query)
+    return render_template("admin/list_operations/courier_detail.html", username=session["username"], data=query, totalOrder=totalCourierOrder)
 
 def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):
     session["username"] = username
@@ -746,8 +822,7 @@ def getMenus(cursor, limit=None):
     return query
 
 def getOrders(cursor, limit=None):
-    cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
-                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id")
+    cursor.execute("SELECT * FROM foodOrder ORDER BY orderDate desc ")
 
     query = cursor.fetchall()
     return query
@@ -780,6 +855,22 @@ def getAllDbData(toGet, limit=None):
         else:
             pass
     return data
+
+def canReview(cursor):
+    cursor.execute("SELECT restaurant.id FROM restaurant, foodOrder WHERE restaurant.id NOT IN "
+                   "(SELECT DISTINCT review.restaurantId FROM foodOrder, review WHERE "
+                   "foodOrder.userUserName = (?) and foodOrder.userUserName NOT IN "
+                   "(SELECT review.userUserName FROM review WHERE review.restaurantId = foodOrder.restaurantId)) and "
+                   "foodOrder.userUserName = (?) and restaurant.id = foodOrder.restaurantId",
+                   (session["username"], session["username"]))
+
+    query = cursor.fetchall()
+    reviewedRests = []
+
+    for id in query:
+        reviewedRests.append(id[0])
+
+    return reviewedRests
 
 def orderArrayToStr(str):
     with sqlite3.connect(DATABASE) as database:
