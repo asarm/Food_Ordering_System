@@ -464,16 +464,18 @@ def allMenus():
 
     if request.method == "POST":
         if 'order' in request.form:
-            orderBy = request.form['orderBy'].lower()
+            orderBy = request.form['orderBy']
 
             if session["isFiltered"] == False:
-                command = "SELECT menuName as Name, price, content, restaurantId FROM menu ORDER BY "+str(orderBy)
+                command = "SELECT menu.id, menuName, price, content, restaurant.restaurantName " \
+                          " FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY "+orderBy+" desc "
+                print(command)
                 cursor.execute(command)
                 query = cursor.fetchall()
                 session["filteredData"]["menu"] = query
             else:
                 df = pd.DataFrame(session["filteredData"]["menu"],
-                                  columns=['name', 'price','content', 'restaurantId'])
+                                  columns=['id','menuName', 'price','content', 'restaurantName'])
                 df = df.sort_values(by=orderBy)
                 session["filteredData"]["menu"] = df.values.tolist()
 
@@ -483,27 +485,17 @@ def allMenus():
 
             for c in request.form.keys():
                 if request.form[c] != '' and request.form[c] != "filter":
-                    if request.form[c] == "on":
-                        filtered_cols.append("is_available")
-                        expected_vals.append(1)
-                    else:
-                        filtered_cols.append(c)
-                        expected_vals.append(request.form[c])
+                    filtered_cols.append(c)
+                    expected_vals.append(request.form[c])
 
             if len(expected_vals) > 0:
-                if filtered_cols[0] != "is_available":
-                    q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
-                else:
-                    q += " is_available = 1"
+                for index in range(0, len(expected_vals)):
+                    q += filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
 
-                if len(expected_vals) > 1:
-                    for index in range(1, len(expected_vals)):
-                        if filtered_cols[index] != "is_available":
-                            q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
-                    if filtered_cols.count("is_available") > 0:
-                        q += " and is_available = 1"
 
-                command = "SELECT menuName as Name, price, content, restaurantId FROM menu WHERE "+q
+                command = "SELECT menu.id, menuName, price, content, restaurant.restaurantName " \
+                          " FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id and "+q+" ORDER BY menu.id desc "
+                print("Command", command)
                 cursor.execute(command)
                 query = cursor.fetchall()
                 session["filteredData"]["menu"] = query
@@ -527,14 +519,18 @@ def allOrders():
             orderBy = request.form['orderBy']
 
             if session["isFiltered"] == False:
-                command = "SELECT id,content,orderDate,is_delivered,totalPrice,userUserName FROM foodOrder ORDER BY "+str(orderBy)
+                "SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered,  userUserName, "
+                "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id"
+                command = "SELECT foodOrder.id,content,orderDate,totalPrice,is_delivered,couriers.name as courier_name, userUserName, " \
+                          "restaurant.restaurantName as restaurant_name" \
+                          " FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id" \
+                          " ORDER BY "+str(orderBy)
                 cursor.execute(command)
                 query = cursor.fetchall()
                 session["filteredData"]["orders"] = query
             else:
-                print(pd.DataFrame(session["filteredData"]["orders"]))
                 df = pd.DataFrame(session["filteredData"]["orders"],
-                                  columns=['id','content', 'orderDate','is_delivered','totalPrice','userUserName'])
+                                  columns=['id','content', 'orderDate','totalPrice','is_delivered','courier_name','userUserName', 'restaurant_name'])
                 df = df.sort_values(by=orderBy)
                 session["filteredData"]["orders"] = df.values.tolist()
 
@@ -555,23 +551,25 @@ def allOrders():
                 if filtered_cols[0] != "is_delivered" and filtered_cols[0] != "maxprice" and filtered_cols[0] != "minprice":
                     q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
                 else:
-                    q += " is_delivered = 1"
+                    q += " is_delivered = 1 "
 
                 if len(expected_vals) > 1:
                     for index in range(1, len(expected_vals)):
                         if filtered_cols[index] != "is_delivered":
                             q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
                     if filtered_cols.count("is_delivered") > 0:
-                        q += " and is_delivered = 1"
+                        q += " and is_delivered = 1 "
 
-                command = "SELECT id,content,orderDate,is_delivered,totalPrice,userUserName FROM foodOrder WHERE " + q
-                print(command)
+                command = "SELECT foodOrder.id,content,orderDate,totalPrice,is_delivered,couriers.name as courier_name, userUserName, restaurant.restaurantName as restaurant_name " \
+                          "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id " \
+                          "and " + q + "ORDER BY foodOrder.id"
 
                 cursor.execute(command)
                 query = cursor.fetchall()
                 session["filteredData"]["orders"] = query
             else:
-                session["filteredData"] = getAllDbData(toGet=["order"])
+                session["filteredData"] = getAllDbData(toGet=["orders"])
+                print(session["filteredData"])
             session["isFiltered"] = True
 
     else:
@@ -765,14 +763,23 @@ def courierDetail():
         print("Detail:",query)
     return render_template("admin/list_operations/courier_detail.html", username=session["username"], data=query, totalOrder=totalCourierOrder)
 
-@app.route("/reviewRestaurant", methods=["GET"])
+@app.route("/reviewRestaurant", methods=["GET","POST"])
 def reviewRestaurant():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
-        
+        restID = request.args.get('restId', default=1, type=int)
 
-    return render_template("user/reviewRestaurant.html", username=session["username"])
+
+        if request.method == "POST":
+            rating = request.form["rating"]
+            cursor.execute("INSERT INTO review(rating,restaurantId,userUserName) VALUES((?),(?), (?))", (rating, restID, f"{session['username']}"))
+            database.commit()
+            cursor.execute("UPDATE restaurant SET averageRating = (SELECT avg(rating) FROM review WHERE restaurantId = (?)) WHERE restaurant.id= (?)",
+                           (restID, restID))
+            return redirect("home")
+
+    return render_template("user/reviewRestaurant.html", username=session["username"], restId = restID)
 
 
 def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):

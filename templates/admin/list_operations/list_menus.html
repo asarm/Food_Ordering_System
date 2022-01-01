@@ -27,20 +27,16 @@
       <div class="card card-body">
        <form action="/menus" method="POST">
            <div class="form-group">
-            <label for="exampleInputEmail1">By Username</label>
-            <input type="text" class="form-control" id="exampleInputEmail1" name="restaurantName" placeholder="Enter Username">
+            <label for="exampleInputEmail1">By Menu Name</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="menuName" placeholder="Enter Menu Name">
           </div>
           <div class="form-group">
             <label for="exampleInputEmail1">By Price</label>
-            <input type="text" class="form-control" id="exampleInputEmail1" name="address" placeholder="Enter Price">
+            <input type="text" class="form-control" id="exampleInputEmail1" name="price" placeholder="Enter Price">
           </div>
           <div class="form-group">
             <label for="exampleInputEmail1">By Content</label>
-            <input type="text" class="form-control" id="exampleInputEmail1" name="averageRating" placeholder="Enter Content">
-          </div>
-          <div class="form-group">
-            <label for="exampleInputEmail1">By Restaurant Name</label>
-            <input type="text" class="form-control" id="exampleInputEmail1" name="averageRating" placeholder="Enter Restaurant Name">
+            <input type="text" class="form-control" id="exampleInputEmail1" name="content" placeholder="Enter Content">
           </div>
           <button type="submit" name="filter" value="filter" class="btn btn-success">Filter</button>
         </form>
@@ -50,17 +46,16 @@
   <div class="col">
     <div class="collapse multi-collapse" id="order">
       <div class="card card-body">
-        <form action="/restaurants" method="POST">
+        <form action="/menus" method="POST">
             <div class="row">
                 <div class="col-md-1">
                     By
                 </div>
                 <div class="col-md-2">
                     <select class="form-control" id="orderBy" name="orderBy">
-                      <option>Username</option>
-                      <option>Price</option>
-                      <option>Content</option>
-                      <option>Restaurant Name</option>
+                      <option>menuName</option>
+                      <option>price</option>
+                      <option>content</option>
                    </select>
                 </div>
            </div>
