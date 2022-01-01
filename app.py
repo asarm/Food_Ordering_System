@@ -28,7 +28,7 @@ with sqlite3.connect(DATABASE) as database:
     cursor.execute("CREATE TABLE IF NOT EXISTS foodOrder(id INTEGER PRIMARY KEY,content TEXT,orderDate Date DEFAULT (datetime('now','localtime')),totalPrice REAL, is_delivered INTEGER DEFAULT(0), is_reviewed INTEGER DEFAULT(0), restaurantId INTEGER, FOREIGN KEY(restaurantId) REFERENCES restaurant(id))")
 
     
-    cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate datetime)")
+   cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,Date reviewDate DEFAULT (datetime('now','localtime')))")
     
     '''
     cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId INTEGER,menuId int,PRIMARY KEY(orderId,menuId),"
