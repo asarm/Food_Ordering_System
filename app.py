@@ -28,9 +28,10 @@ with sqlite3.connect(DATABASE) as database:
         "CREATE TABLE IF NOT EXISTS restaurant(id INTEGER PRIMARY KEY, restaurantName varchar(30),address varchar(250),lat Text,lng Text,isOpen binary,averageRating REAL)")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate datetime)")
-    '''
+    
     cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId INTEGER,menuId int,PRIMARY KEY(orderId,menuId),"
                    "FOREIGN KEY (orderId) REFERENCES foodOrder(id),FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE)")
+    '''
 
     cursor.execute("CREATE TABLE IF NOT EXISTS has(menuId INTEGER,menuitemId INTEGER,PRIMARY KEY(menuId, menuItemId),"
                    "FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE,"
@@ -556,6 +557,9 @@ def confirmOrder():
 
         cursor.execute("SELECT id FROM foodOrder ORDER BY id DESC LIMIT 1")
         orderId = cursor.fetchall()[0][0]
+        
+        print("MenuSelected: "+order['menus']['menuNames'][0]+"\n OrderId: "+ str(orderId))
+        cursor.execute("INSERT INTO consistsOf(orderId, menuId) VALUES(?,(SELECT id FROM menu WHERE menuName = (?)))", (orderId, order['menus']['menuNames'][0]))
 
         cursor.execute("UPDATE couriers SET is_available=0,orderId=(?) WHERE id=(?)", (orderId,query[1]))
         database.commit()
