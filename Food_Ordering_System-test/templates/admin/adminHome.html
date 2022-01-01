@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">AppName</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active"><a class="nav-link" href="/">{{username}}</a></li>
+          <li class="nav-item active"><a class="nav-link" href="/exit">Exit</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block body %}
+ <center>
+ <div class="row mt-3">
+     <div class="col-md-6" style="z-index: 0;">
+         <ul class="list-group">
+          <li class="list-group-item active">Recent Orders <a href="/orders" class="btn btn-sm btn-success" id="See All Orders">See All</a>
+          </li>
+          <li class="list-group-item">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">Username</th>
+                  <th scope="col">Restaurant</th>
+                  <th scope="col">Order</th>
+                  <th scope="col">Courier Name</th>
+                  <th scope="col">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+              {%for i in range(data["orders"]|length)%}
+                <tr>
+                  <td>{{ data["orders"][i][6] }}</td>
+                  <td>{{ data["orders"][i][7] }}</td>
+                  <td>{{ data["orders"][i][1] }}</td>
+                  <td>{{ data["orders"][i][5] }}</td>
+                  <td>{{ data["orders"][i][2] }}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </li>
+        </ul>
+     </div>
+     <div class="col-md-6" style="z-index: 0;">
+         <ul class="list-group">
+          <li class="list-group-item active" >Last Registered Users
+              <a type="button" href="/users" class="btn btn-sm btn-success" id="See All Users">See All</a>
+            <a href="/addUser" class="btn btn-sm btn-warning">Add New</a></li>
+          <li class="list-group-item">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Username</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Register Date</th>
+                </tr>
+              </thead>
+              <tbody>
+              {%for i in range(data["users"]|length)%}
+                <tr>
+                  <th scope="row">{{ i+1 }}</th>
+                  <td>{{ data["users"][i][0] }}</td>
+                  <td>{{ data["users"][i][1] }}</td>
+                  <td>{{ data["users"][i][2] }}</td>
+                  <td>{{ data["users"][i][3] }}</td>
+                </tr>
+              {%endfor%}
+              </tbody>
+            </table>
+          </li>
+        </ul>
+     </div>
+ </div>
+</center>
+
+<center>
+ <div class="row mt-3">
+     <div class="col-md-6" style="z-index: 0;">
+         <ul class="list-group">
+          <li class="list-group-item active">Restaurants <a class="btn btn-sm btn-success" href="\restaurants" id="See All Restaurants">See All</a>
+            <a href="/addRestaurant" class="btn btn-sm btn-warning">Add New</a></li>
+          <li class="list-group-item">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Open Status</th>
+                  <th scope="col">Average Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                {%for i in range(data["restaurant"]|length)%}
+                <tr>
+                  <th scope="row">{{ i+1 }}</th>
+                  <td>{{ data["restaurant"][i][0] }}</td>
+                  <td>{{ data["restaurant"][i][1] }}</td>
+                  <td>{{ data["restaurant"][i][2] }}</td>
+                  <td>{{ data["restaurant"][i][3] }}</td>
+                </tr>
+              {%endfor%}
+              </tbody>
+            </table>
+          </li>
+        </ul>
+     </div>
+     <div class="col-md-6" style="z-index: 0;">
+         <ul class="list-group">
+          <li class="list-group-item active">Couriers <a class="btn btn-sm btn-success" href="/couriers" id="See All Couriers">See All</a>
+              <a href="/addCourier" class="btn btn-sm btn-warning">Add New</a></li>
+          <li class="list-group-item">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Courier Number</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Availability</th>
+                  <th scope="col">Current Location</th>
+                  <th scope="col">Order Number</th>
+                </tr>
+              </thead>
+              <tbody>
+                {%for i in range(data["couriers"]|length)%}
+                <tr>
+                  <th scope="row">{{ i+1 }}</th>
+                    <td>{{ data["couriers"][i][0] }}</td>
+                    <td>{{ data["couriers"][i][1] }}</td>
+                    <td>{{ data["couriers"][i][2] }}</td>
+                    <td>({{ data["couriers"][i][3] }},{{ data["couriers"][i][4] }})</td>
+                  <td>{{ data["couriers"][i][5] }}</td>
+                </tr>
+              {%endfor%}
+              </tbody>
+            </table>
+          </li>
+        </ul>
+     </div>
+ </div>
+</center>
+
+<center>
+  <div class="row mt-3">
+    <div class="col-md-6" style="z-index: 0;">
+        <ul class="list-group">
+         <li class="list-group-item active">Menus <a class="btn btn-sm btn-success" href="\menus" id="See All Menus">See All</a>
+           <a href="/addMenu" class="btn btn-sm btn-warning">Add New</a></li>
+         <li class="list-group-item">
+           <table class="table table-hover">
+             <thead>
+               <tr>
+                 <th scope="col">#</th>
+                 <th scope="col">Menu Name</th>
+                 <th scope="col">Restaurant Name</th>
+                 <th scope="col">Price</th>
+                 <th scope="col">Content</th>
+               </tr>
+             </thead>
+             <tbody>
+               {%for i in range(data["restaurantName"]|length)%}
+               <tr>
+                 <th scope="row">{{ i+1 }}</th>
+                 <td>{{ data["restaurantName"][i][1] }}</td>
+                 <td>{{ data["restaurantName"][i][0] }}</td>
+                 <td>{{ data["restaurantName"][i][2] }}$</td>
+                 <td>{{ data["restaurantName"][i][5] }}</td>
+               </tr>
+             {%endfor%}
+             </tbody>
+           </table>
+         </li>
+       </ul>
+    </div>
+ </center>
+
+{% endblock %}

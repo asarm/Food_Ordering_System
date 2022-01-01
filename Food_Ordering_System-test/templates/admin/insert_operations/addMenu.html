@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">AppName</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active"><a class="nav-link" href="/">{{username}}</a></li>
+          <li class="nav-item active"><a class="nav-link" href="/exit">Exit</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block body %}
+<h3>Add Menu</h3>
+    <hr>
+     <form action="/addMenu" method="POST">
+      <div class="form-group">
+        <label for="username">Menu Name</label>
+        <input type="text" class="form-control" id="Menu" name="Menu" placeholder="Menu Name">
+      </div>
+      <div class="form-group">
+        <label for="username">Restaurant Name</label>
+        <input type="text" class="form-control" id="Restaurant" name="Restaurant" placeholder="Restaurant Name">
+      </div>
+      <div class="form-group">
+        <label for="price">Menu Price</label>
+        <input type="text" class="form-control" id="price" name="Price" placeholder="Menu Price">
+      </div>
+      <div class="form-group">
+        <label for="price">Menu Content</label>
+        <input type="text" class="form-control" id="content" name="Content" placeholder="Menu Content">
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+{% endblock %}

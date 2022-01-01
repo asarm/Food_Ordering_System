@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">AppName</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active"><a class="nav-link" href="/">{{username}}</a></li>
+          <li class="nav-item active"><a class="nav-link" href="/exit">Exit</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block body %}
+    <div style="padding-left: 15px">
+        <br>
+        <b>Courier Name: </b>{{ data[0][1] }}<br>
+        <b>Courier ID: </b>{{ data[0][0] }}<br>
+        <b>Last Coordinates: </b>({{ data[0][3] }}, {{ data[0][4] }})<br>
+        <b>Is Available: </b>
+        {% if data[0][2] == '0' %}
+            No
+        {% else %}
+            Yes
+        {% endif %}
+    </div><br>
+    {% if totalOrder != 0 %}
+        <div style="padding-left: 15px">
+            <h3>Recent Activities</h3>
+        </div>
+        <table class="table">
+          <thead class="thead-dark">
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Order ID</th>
+                <th scope="col">Order Date</th>
+                <th scope="col">Customer Name</th>
+                <th scope="col">Is Delivered</th>
+                <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {%for i in range(data|length)%}
+                    <tr>
+                      <th scope="row">{{ i+1 }}</th>
+                      <td>{{ data[i][8] }}</td>
+                      <td>{{ data[i][6] }}</td>
+                      <td>{{ data[i][7] }}</td>
+                        {% if data[i][2] == '0' %}
+                            <td>No</td>
+                        {% else %}
+                            <td>Yes</td>
+                        {% endif %}
+                    </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+    {% else %}
+        <div style="padding-left: 15px">
+            <h5>Couirer Does Not Have Any Previous Order</h5>
+        </div>
+    {% endif %}
+{% endblock %}

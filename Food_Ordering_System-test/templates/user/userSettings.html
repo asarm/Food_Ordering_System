@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="/home">AppName</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active"><a class="nav-link" href="/home">Home</a></li>
+          <li class="nav-item active"><a class="nav-link" href="/">{{username}}</a></li>
+          <li class="nav-item active"><a class="nav-link" href="/exit">Exit</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block body %}
+<h3>User Settings</h3>
+    <hr>
+     <form action="/userSettings" method="POST">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input value="{{ username }}" type="text" class="form-control" id="name" name="name" placeholder="Userame">
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input value="{{ email }}" type="email" class="form-control" id="email" aria-describedby="emailHelp" name="email" placeholder="Enter email">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input value="{{ password }}" type="password" class="form-control" id="password" name="password" placeholder="Password">
+      </div>
+      <div class="form-group">
+        <label for="username">Address</label>
+        <input value="{{ address }}" type="text" class="form-control" id="address" name="address" placeholder="Address">
+      </div>
+      <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+{% endblock %}

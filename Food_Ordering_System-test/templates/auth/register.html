@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block body %}
+
+<div class="col-md-5">
+    <h3>{{ title }}</h3>
+    <hr>
+     <form action="/register" method="POST">
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input type="email" class="form-control" id="email" aria-describedby="emailHelp" name="email" placeholder="Enter email">
+      </div>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" class="form-control" id="username" name="username" placeholder="Username">
+      </div>
+      <div class="form-group">
+        <label for="username">Address</label>
+        <input type="text" class="form-control" id="address" name="address" placeholder="Address">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+      </div>
+      <button type="submit" class="btn btn-primary">Register</button>
+         <small><a href="/" style="color:black">Login</a></small>
+    </form>
+</div>
+
+{% endblock %}
