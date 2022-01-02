@@ -468,7 +468,7 @@ def allMenus():
 
             if session["isFiltered"] == False:
                 command = "SELECT menu.id, menuName, price, content, restaurant.restaurantName " \
-                          " FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY "+orderBy+" desc "
+                          " FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY "+orderBy
                 print(command)
                 cursor.execute(command)
                 query = cursor.fetchall()
