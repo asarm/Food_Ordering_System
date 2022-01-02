@@ -1,3 +1,4 @@
+from typing import DefaultDict
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import requests
@@ -579,6 +580,17 @@ def allOrders():
     return render_template("admin/list_operations/list_orders.html", username=session["username"],
                            data=session["filteredData"])
 
+@app.route("/myOrders", methods=["GET", "POST"])
+def myOrders():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered, restaurant.restaurantName, foodOrder.is_reviewed, restaurant.id "
+                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?) INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id", (session["username"],))
+    orders = cursor.fetchall()
+
+    return render_template("user/list_user_orders.html", username=session["username"], data=orders)
+
 @app.route("/selectRestaurant", methods=["GET", "POST"])
 def selectRestaurant():
     with sqlite3.connect(DATABASE) as database:
@@ -588,9 +600,11 @@ def selectRestaurant():
     data = query
     session["menus"] = []
 
+    '''
     toReview = canReview(cursor)
+    '''
 
-    return render_template('user/selectRestaurant.html', title='Restaurants', username=session["username"], data=data, toReview=toReview)
+    return render_template('user/selectRestaurant.html', title='Restaurants', username=session["username"], data=data)
 
 @app.route("/selectMenu", methods=["GET", "POST"])
 def selectMenu():
@@ -717,17 +731,17 @@ def getUserViewData():
     lat, lng = query[0], query[1]
 
     # fetch user's orders
-    cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered, restaurant.restaurantName "
-                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?) INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id", (session["username"],))
+    cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered, restaurant.restaurantName, foodOrder.is_reviewed, restaurant.id "
+                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?) INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id LIMIT 5", (session["username"],))
     orders = cursor.fetchall()
 
     # fetch cheapest menus
-    cursor.execute("SELECT restaurant.restaurantName, restaurant.address, menu.menuName, menu.price, menu.id, restaurant.id, menu.content "
+    cursor.execute("SELECT restaurant.restaurantName, restaurant.address, menu.menuName, menu.price, menu.id, restaurant.id, menu.content, restaurant.isOpen "
                    "FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY price ASC LIMIT 5")
     cheap_menus = cursor.fetchall()
 
     # fetch near restaurants
-    cursor.execute("SELECT lat-(?)+lng-(?) as distance,* FROM restaurant WHERE isOpen = 1 ORDER BY distance asc LIMIT 5", (lat, lng))
+    cursor.execute("SELECT lat-(?)+lng-(?) as distance,* FROM restaurant ORDER BY distance asc LIMIT 5", (lat, lng))
     near_restaurants = cursor.fetchall()
 
 
@@ -774,6 +788,8 @@ def reviewRestaurant():
         cursor = database.cursor()
 
         restID = request.args.get('restId', default=1, type=int)
+        foodOrderId = request.args.get('foodOrderId', default=0, type=int)
+        print(request.args)
 
 
         if request.method == "POST":
@@ -782,9 +798,13 @@ def reviewRestaurant():
             database.commit()
             cursor.execute("UPDATE restaurant SET averageRating = (SELECT avg(rating) FROM review WHERE restaurantId = (?)) WHERE restaurant.id= (?)",
                            (restID, restID))
+            print(foodOrderId)
+            cursor.execute("UPDATE foodOrder SET is_reviewed = 1 WHERE foodOrder.id = (?)",
+                           (foodOrderId,))
+                           
             return redirect("home")
 
-    return render_template("user/reviewRestaurant.html", username=session["username"], restId = restID)
+    return render_template("user/reviewRestaurant.html", username=session["username"], restId = restID, foodOrderId=foodOrderId)
 
 @app.route("/editRestaurant", methods=["GET","POST"])
 def editRestaurant():
@@ -865,7 +885,7 @@ def getRestaurants(cursor, limit=None):
     return query
 
 def getMenus(cursor, limit=None):
-    cursor.execute("SELECT menu.id, menuName, price, content, restaurant.restaurantName FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY menu.id desc")
+    cursor.execute("SELECT menu.id, menuName, price, content, restaurant.restaurantName, restaurant.isOpen FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY menu.id desc")
     query = cursor.fetchall()
     return query
 
@@ -904,8 +924,9 @@ def getAllDbData(toGet, limit=None):
         else:
             pass
     return data
-
+'''
 def canReview(cursor):
+
     cursor.execute("SELECT restaurant.id as restId, foodOrder.restaurantId as orderId, users.username FROM restaurant, foodOrder "
                    "INNER JOIN users ON users.username = foodOrder.userUserName "
                    " WHERE (restaurant.id, users.username) NOT IN (SELECT review.restaurantId, review.userUserName FROM review) "
@@ -921,7 +942,7 @@ def canReview(cursor):
         reviewedRests.append(id[0])
 
     return reviewedRests
-
+'''
 def orderArrayToStr(str):
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()

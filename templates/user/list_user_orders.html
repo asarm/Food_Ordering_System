@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">AppName</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active"><a class="nav-link" href="/">{{username}}</a></li>
+          <li class="nav-item active"><a class="nav-link" href="/exit">Exit</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block body %}
+<center>
+    <div class="col-md-6">
+        <form action="/home" method="POST">
+        <table class="table table-hover">
+             <thead>
+               <tr>
+                 <th scope="col">Restaurant Name</th>
+                 <th scope="col">Total Price</th>
+                 <th scope="col">Courier Name</th>
+                 <th scope="col">Order Content</th>
+                 <th scope="col">Order Date</th>
+                 <th scope="col">Status</th>
+                 <th scope="col">Review</th>
+               </tr>
+             </thead>
+             <tbody>
+             {%for i in range(data|length)%}
+               <tr>
+                 <td>{{ data[i][6] }} </td>
+                 <td>{{ data[i][0] }} $</td>
+                 <td>{{ data[i][2] }}</td>
+                 <td>{{ data[i][3] }}</td>
+                 <td>{{ data[i][1] }}</td>
+                   {% if data[i][5] == 1 %}
+                       <td><button class="btn btn-secondary" disabled name="confirmedOrder" value="{{data[i][4]}}">Confirmed</button></td>
+                   {% else %}
+                       <td><button class="btn btn-warning" name="confirmedOrder" value="{{data[i][4]}}">Confirm Delivered</button></td>
+                   {% endif %}
+                   {% if data[i][7] == 1 %}
+                       <td><button class="btn btn-secondary" disabled name="confirmedOrder" value="{{data[i][4]}}">Reviewed</button></td>
+                   {% else %}
+                       <td><a href="/reviewRestaurant?restId={{ data[i][8] }}&foodOrderId={{ data[i][4] }}" class="btn btn-warning" name="confirmedOrder" value="{{data[i][4]}}">Review</a></td>
+                   {% endif %}
+               </tr>
+             {%endfor%}
+             </tbody>
+        </table>
+        </form>
+    </div>
+</center>
+{% endblock %}
+

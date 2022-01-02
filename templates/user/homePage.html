@@ -44,7 +44,15 @@
                   <td>{{ data["near_restaurants"][i][3] }}</td>
                   <td>{{ data["near_restaurants"][i][7] }}</td>
                   <td>{{ data["near_restaurants"][i][6] }}</td>
-                  <td><button type="submit" name="selectedRestaurant" value="'{{ data["near_restaurants"][i][1] }}'" class="btn btn-success btn-sm">Order</button></td>
+                  {% if data["near_restaurants"][i][6] == 0 %}
+                <td>
+                  <button type="submit" disabled name="selectedRestaurant" value='{{ data["near_restaurants"][i][1] }}' class="btn btn-secondary">Closed</button>
+                </td>
+                {% else %}
+                <td>
+                  <button type="submit"  name="selectedRestaurant" value='{{ data["near_restaurants"][i][1] }}' class="btn btn-success">Order</button>
+                </td>
+                {% endif %}
                 </tr>
               {%endfor%}
               </tbody>
@@ -74,8 +82,13 @@
                   <td>{{ data["cheap_menus"][i][2] }} </td>
                   <td>{{ data["cheap_menus"][i][3] }} $</td>
                   <td>{{ data["cheap_menus"][i][6] }} </td>
+                  {% if data["cheap_menus"][i][7] == 0 %}
+                        <td><button class="btn btn-secondary" disabled name="selectedMenu" value="{{ data["cheap_menus"][i][4] }}">Closed</button></td>
+                    {% else %}
+                        <td><button class="btn btn-sm btn-success" name="selectedMenu" value="{{ data["cheap_menus"][i][4] }}">Order</button></td>
+                    {% endif %}
                   <!-- <input type="text" hidden value="{{ data["cheap_menus"][i][5] }}" name="selectedRestaurantpre"> -->
-                  <td><button type="submit" name="selectedMenu" value="{{ data["cheap_menus"][i][4] }}" class="btn btn-success btn-sm">Order</button></td>
+                  
                 </tr>
               {%endfor%}
               </tbody>
@@ -87,7 +100,7 @@
  <center>
      <div class="col-md-6">
          <ul class="list-group">
-          <li class="list-group-item active">My Last Orders <a href="" class="btn btn-sm btn-success">See All Orders</a></li>
+          <li class="list-group-item active">My Last Orders <a href="/myOrders" class="btn btn-sm btn-success">See All Orders</a></li>
           </ul>
          <form action="/home" method="POST">
          <table class="table table-hover">
@@ -99,6 +112,7 @@
                   <th scope="col">Order Content</th>
                   <th scope="col">Order Date</th>
                   <th scope="col">Status</th>
+                  <th scope="col">Review</th>
                 </tr>
               </thead>
               <tbody>
@@ -113,6 +127,11 @@
                         <td><button class="btn btn-secondary" disabled name="confirmedOrder" value="{{data['orders'][i][4]}}">Confirmed</button></td>
                     {% else %}
                         <td><button class="btn btn-warning" name="confirmedOrder" value="{{data['orders'][i][4]}}">Confirm Delivered</button></td>
+                    {% endif %}
+                    {% if data["orders"][i][7] == 1 %}
+                        <td><button class="btn btn-secondary" disabled name="confirmedOrder" value="{{data['orders'][i][4]}}">Reviewed</button></td>
+                    {% else %}
+                        <td><a href="/reviewRestaurant?restId={{ data['orders'][i][8] }}&foodOrderId={{ data['orders'][i][4] }}" class="btn btn-warning" name="confirmedOrder" value="{{data['orders'][i][4]}}">Review</a></td>
                     {% endif %}
                 </tr>
               {%endfor%}

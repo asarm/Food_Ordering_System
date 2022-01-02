@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block body %}
-    <form action="/reviewRestaurant?restId={{ restId }}" method="POST" style="margin-left: 20px;margin-top: 20px">
+    <form action="/reviewRestaurant?restId={{ restId }}&foodOrderId={{ foodOrderId }}" method="POST" style="margin-left: 20px;margin-top: 20px">
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="rating" id="inlineRadio1" value="1">
           <label class="form-check-label" for="inlineRadio1">1</label>

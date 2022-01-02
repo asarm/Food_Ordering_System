@@ -67,6 +67,7 @@
 </div>
 
 <div>
+  <form action="/selectMenu" method="POST">
     <table class="table">
       <thead class="thead-dark">
         <tr>
@@ -75,6 +76,7 @@
             <th scope="col">Price</th>
             <th scope="col">Content</th>
             <th scope="col">Restaurant Name</th>
+            <th scope="col"></th>
         </tr>
       </thead>
       <tbody>
@@ -85,9 +87,15 @@
                   <td>{{ data["menu"][i][2] }}$</td>
                   <td>{{ data["menu"][i][3] }}</td>
                   <td>{{ data["menu"][i][4] }}</td>
+                  {% if session["user_type"] == 0 and data["menu"][i][5] == 1 %}
+               <td><button type="submit" name="selectedMenu" value='{{ data["menu"][i][0] }}' class="btn btn-success">Select</button></td>
+                  {% else %}
+               <td></td>
+                  {% endif %}
                 </tr>
         {%endfor%}
       </tbody>
     </table>
+  </form>
 </div>
 {% endblock %}
