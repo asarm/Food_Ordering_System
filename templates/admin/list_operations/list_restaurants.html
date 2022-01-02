@@ -61,6 +61,7 @@
                       <option>Address</option>
                       <option>Rating</option>
                       <option>Open</option>
+                      <option></option>
                    </select>
                 </div>
            </div>
@@ -90,6 +91,7 @@
                   <td>{{ data["restaurant"][i][1] }}</td>
                   <td>{{ data["restaurant"][i][3] }}</td>
                   <td>{{ data["restaurant"][i][2] }}</td>
+                  <td><a href="\editRestaurant?restId={{ data["restaurant"][i][4] }}" class="btn btn-primary">Edit</a></td>
                 </tr>
         {%endfor%}
       </tbody>

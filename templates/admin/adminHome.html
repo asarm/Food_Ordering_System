@@ -20,53 +20,29 @@
  <div class="row mt-3">
      <div class="col-md-6" style="z-index: 0;">
          <ul class="list-group">
-          <li class="list-group-item active">Recent Orders <button class="btn btn-sm btn-success" id="See All Orders">See All</button> 
+          <li class="list-group-item active">Recent Orders <a href="/orders" class="btn btn-sm btn-success" id="See All Orders">See All</a>
           </li>
           <li class="list-group-item">
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th scope="col">#</th>
                   <th scope="col">Username</th>
                   <th scope="col">Restaurant</th>
                   <th scope="col">Order</th>
-                  <th scope="col">Courier Number</th>
+                  <th scope="col">Courier Name</th>
                   <th scope="col">Date</th>
                 </tr>
               </thead>
               <tbody>
+              {%for i in range(data["orders"]|length)%}
                 <tr>
-                  <th scope="row">1</th>
-                  <td>First Username</td>
-                  <td>First Restaurant</td>
-                  <td>First Order</td>
-                  <td>First Courier Number</td>
-                  <td>First Date</td>
+                  <td>{{ data["orders"][i][6] }}</td>
+                  <td>{{ data["orders"][i][7] }}</td>
+                  <td>{{ data["orders"][i][1] }}</td>
+                  <td>{{ data["orders"][i][5] }}</td>
+                  <td>{{ data["orders"][i][2] }}</td>
                 </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Second Username</td>
-                  <td>Second Restaurant</td>
-                  <td>Second Order</td>
-                  <td>Second Courier Number</td>
-                  <td>Second Date</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Third Username</td>
-                  <td>Third Restaurant</td>
-                  <td>Third Order</td>
-                  <td>Third Courier Number</td>
-                  <td>Third Date</td>
-                </tr>
-                <tr>
-                  <th scope="row">4</th>
-                  <td>Fourth Username</td>
-                  <td>Fourth Restaurant</td>
-                  <td>Fourth Order</td>
-                  <td>Fourth Courier Number</td>
-                  <td>Fourth Date</td>
-                </tr>
+              {% endfor %}
               </tbody>
             </table>
           </li>
@@ -187,15 +163,17 @@
                  <th scope="col">Menu Name</th>
                  <th scope="col">Restaurant Name</th>
                  <th scope="col">Price</th>
+                 <th scope="col">Content</th>
                </tr>
              </thead>
              <tbody>
-               {%for i in range(data["menu"]|length)%}
+               {%for i in range(data["restaurantName"]|length)%}
                <tr>
                  <th scope="row">{{ i+1 }}</th>
-                 <td>{{ data["menu"][i][1] }}</td>
+                 <td>{{ data["restaurantName"][i][1] }}</td>
                  <td>{{ data["restaurantName"][i][0] }}</td>
-                 <td>{{ data["menu"][i][3] }}</td>
+                 <td>{{ data["restaurantName"][i][2] }}$</td>
+                 <td>{{ data["restaurantName"][i][5] }}</td>
                </tr>
              {%endfor%}
              </tbody>

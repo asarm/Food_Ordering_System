@@ -18,14 +18,14 @@
 
 {% block body %}
     <div class="row">
-    <a class="btn btn-sm btn-success" href="\selectRestaurant"> New Order </a>
+    <a class="btn btn-sm btn-success" href="/selectRestaurant"> New Order </a>
     </div>
     <center>
      <div class="row mt-3">
      <div class="col-md-6">
          <ul class="list-group">
-          <li class="list-group-item active">Nearest Restaurants <a href="selectRestaurant" class="btn btn-sm btn-success">See All Restaurants</a></li>
-          </ul>
+          <li class="list-group-item active">Nearest Restaurants <a href="/selectRestaurant" class="btn btn-sm btn-success">See All Restaurants</a></li>
+         </ul>
          <form action="/selectMenu" method="POST">
          <table class="table table-hover">
               <thead>
@@ -63,7 +63,7 @@
                   <th scope="col">Address</th>
                   <th scope="col">Menu Name</th>
                   <th scope="col">Price</th>
-                  <th scope="col"></th>
+                  <th scope="col">Content</th>
                 </tr>
               </thead>
               <tbody>
@@ -72,8 +72,9 @@
                   <td>{{ data["cheap_menus"][i][0] }}</td>
                   <td>{{ data["cheap_menus"][i][1] }}</td>
                   <td>{{ data["cheap_menus"][i][2] }} </td>
-                  <td>{{ data["cheap_menus"][i][3] }} ${{ data["cheap_menus"][i][5] }}</td>
-                    <input type="text" hidden value="{{ data["cheap_menus"][i][5] }}" name="selectedRestaurantpre">
+                  <td>{{ data["cheap_menus"][i][3] }} $</td>
+                  <td>{{ data["cheap_menus"][i][6] }} </td>
+                  <!-- <input type="text" hidden value="{{ data["cheap_menus"][i][5] }}" name="selectedRestaurantpre"> -->
                   <td><button type="submit" name="selectedMenu" value="{{ data["cheap_menus"][i][4] }}" class="btn btn-success btn-sm">Order</button></td>
                 </tr>
               {%endfor%}
@@ -88,27 +89,31 @@
          <ul class="list-group">
           <li class="list-group-item active">My Last Orders <a href="" class="btn btn-sm btn-success">See All Orders</a></li>
           </ul>
-         <form action="" method="POST">
+         <form action="/home" method="POST">
          <table class="table table-hover">
               <thead>
                 <tr>
+                  <th scope="col">Restaurant Name</th>
                   <th scope="col">Total Price</th>
-                  <th scope="col">Couier Name</th>
+                  <th scope="col">Courier Name</th>
+                  <th scope="col">Order Content</th>
                   <th scope="col">Order Date</th>
-                  <th scope="col"></th>
+                  <th scope="col">Status</th>
                 </tr>
               </thead>
               <tbody>
               {%for i in range(data["orders"]|length)%}
                 <tr>
+                  <td>{{ data["orders"][i][6] }} </td>
                   <td>{{ data["orders"][i][0] }} $</td>
                   <td>{{ data["orders"][i][2] }}</td>
+                  <td>{{ data["orders"][i][3] }}</td>
                   <td>{{ data["orders"][i][1] }}</td>
-                  <td>
-                      <button type="submit" name="selectedRestaurant" value="'{{ data["near_restaurants"][i][1] }}'" class="btn btn-success btn-sm">
-                          Set As Delivered
-                      </button>
-                  </td>
+                    {% if data["orders"][i][5] == 1 %}
+                        <td><button class="btn btn-secondary" disabled name="confirmedOrder" value="{{data['orders'][i][4]}}">Confirmed</button></td>
+                    {% else %}
+                        <td><button class="btn btn-warning" name="confirmedOrder" value="{{data['orders'][i][4]}}">Confirm Delivered</button></td>
+                    {% endif %}
                 </tr>
               {%endfor%}
               </tbody>

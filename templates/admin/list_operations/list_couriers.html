@@ -74,6 +74,7 @@
             <th scope="col">Courier Number</th>
             <th scope="col">Name</th>
             <th scope="col">Availability</th>
+            <th scope="col"></th>
         </tr>
       </thead>
       <tbody>
@@ -83,6 +84,7 @@
                   <td>{{ data["couriers"][i][0] }}</td>
                   <td>{{ data["couriers"][i][1] }}</td>
                   <td>{{ data["couriers"][i][2] }}</td>
+                  <td><a href="/courierDetail?courier={{ data["couriers"][i][0] }}" class="btn btn-primary">Detail</a></td>
                 </tr>
         {%endfor%}
       </tbody>

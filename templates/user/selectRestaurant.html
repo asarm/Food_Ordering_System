@@ -41,13 +41,19 @@
             <td>{{ data["restaurant"][i][1] }}</td>
             <td>{{ data["restaurant"][i][2] }}</td>
             <td>{{ data["restaurant"][i][3] }}</td>
-            <td><button type="submit" name="selectedRestaurant" value='{{ data["restaurant"][i][4] }}' class="btn btn-success">Select</button></td>
+            <td>
+                <button type="submit" name="selectedRestaurant" value='{{ data["restaurant"][i][4] }}' class="btn btn-success">Select</button>
+            </td>
+           {% if data["restaurant"][i][4] in toReview %}
+               <td><a href="/reviewRestaurant?restId={{ data["restaurant"][i][4] }}" class="btn btn-danger">Review</a></td>
+           {% else %}
+               <td><button href="\reviewRestaurant" class="btn btn-danger" hidden disabled>Review</button></td>
+           {% endif %}
           </tr>
         {%endfor%}
         </tbody>
       </table>
       <hr>
-      <a href="\selectMenu" class="btn btn-primary">Proceed</a>
     </li>
   </ul>
   {% endblock %}
