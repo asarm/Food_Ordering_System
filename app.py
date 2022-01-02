@@ -773,13 +773,39 @@ def reviewRestaurant():
 
         if request.method == "POST":
             rating = request.form["rating"]
-            cursor.execute("INSERT INTO review(rating,restaurantId,userUserName) VALUES((?),(?), (?))", (rating, restID, f"{session['username']}"))
+            cursor.execute("INSERT INTO review(rating,reviewDate,restaurantId,userUserName) VALUES((?),(datetime('now','localtime')),(?), (?))", (rating, restID, f"{session['username']}"))
             database.commit()
             cursor.execute("UPDATE restaurant SET averageRating = (SELECT avg(rating) FROM review WHERE restaurantId = (?)) WHERE restaurant.id= (?)",
                            (restID, restID))
             return redirect("home")
 
     return render_template("user/reviewRestaurant.html", username=session["username"], restId = restID)
+
+@app.route("/editRestaurant", methods=["GET","POST"])
+def editRestaurant():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    restID = request.args.get('restId', default=1, type=int)
+    print(restID)
+
+    cursor.execute("SELECT restaurantName, address, isOpen FROM restaurant WHERE id=(?)", (restID,))
+    query = cursor.fetchall()[0]
+
+    if request.method == "POST":
+        newAddress = request.form["restAddress"]
+        newName = request.form["restName"]
+        isOpen = request.form["isopen"]
+
+        new_lat, new_lng = searchCoordinates(newAddress)
+
+        print(restID, newAddress, newName, isOpen)
+        cursor.execute("UPDATE restaurant SET restaurantName=(?), address=(?), lat=(?), lng=(?), isOpen=(?) WHERE id=(?)", (newName, newAddress, new_lat, new_lng, isOpen, restID))
+        database.commit()
+
+        return redirect("restaurants")
+
+    return render_template("admin/insert_operations/editRestaurant.html", username=session["username"], restId=restID, restInfo=query)
 
 
 def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):
@@ -875,18 +901,17 @@ def getAllDbData(toGet, limit=None):
     return data
 
 def canReview(cursor):
-    cursor.execute("SELECT restaurant.id FROM restaurant, foodOrder WHERE restaurant.id NOT IN "
-                   "(SELECT DISTINCT review.restaurantId FROM foodOrder, review WHERE "
-                   "foodOrder.userUserName = (?) and foodOrder.userUserName NOT IN "
-                   "(SELECT review.userUserName FROM review WHERE review.restaurantId = foodOrder.restaurantId)) and "
-                   "foodOrder.userUserName = (?) and restaurant.id = foodOrder.restaurantId",
+    cursor.execute("SELECT foodOrder.restaurantId, review.userUserName, foodOrder.userUserName FROM foodOrder, review, restaurant WHERE foodOrder.restaurantId NOT IN (SELECT foodOrder.restaurantId FROM review, foodOrder WHERE foodOrder.restaurantId = review.restaurantId) and review.userUserName = (?) and foodOrder.userUserName = (?)",
                    (session["username"], session["username"]))
+    
 
     query = cursor.fetchall()
+    print(query)
     reviewedRests = []
 
     for id in query:
         reviewedRests.append(id[0])
+       
 
     return reviewedRests
 
