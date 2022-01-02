@@ -732,7 +732,7 @@ def getUserViewData():
 
     # fetch user's orders
     cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered, restaurant.restaurantName, foodOrder.is_reviewed, restaurant.id "
-                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?) INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id LIMIT 5", (session["username"],))
+                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?) INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id ORDER BY foodOrder.orderDate DESC LIMIT 5", (session["username"],))
     orders = cursor.fetchall()
 
     # fetch cheapest menus
