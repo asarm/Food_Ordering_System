@@ -693,7 +693,15 @@ def confirmOrder():
         cursor.execute(command)
         query = cursor.fetchall()[0]
 
-        command = "SELECT lat-"+str(query[0])+"+lng-"+str(query[1])+" as distance, id as courierID FROM couriers WHERE is_available=1 ORDER BY distance asc LIMIT 1";
+        lat = query[0]
+        lng = query[1]
+
+        if lat < 0:
+            lat = -lat
+        if lng < 0:
+            lng = -lng
+
+        command = "SELECT lat-"+str(lat)+"+lng-"+str(lng)+" as distance, id as courierID FROM couriers WHERE is_available=1 ORDER BY distance asc LIMIT 1";
 
         cursor.execute(command)
         query = cursor.fetchall()
@@ -729,6 +737,7 @@ def getUserViewData():
     cursor.execute("SELECT lat,lng FROM users WHERE username=(?)", (session["username"],))
     query = cursor.fetchall()[0]
     lat, lng = query[0], query[1]
+
 
     # fetch user's orders
     cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered, restaurant.restaurantName, foodOrder.is_reviewed, restaurant.id "
