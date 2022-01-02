@@ -678,11 +678,15 @@ def confirmOrder():
         command = "SELECT lat,lng FROM users WHERE username=" + f"'{str(username)}'"
         cursor.execute(command)
         query = cursor.fetchall()[0]
-        print(query)
+
         command = "SELECT lat-"+str(query[0])+"+lng-"+str(query[1])+" as distance, id as courierID FROM couriers WHERE is_available=1 ORDER BY distance asc LIMIT 1";
-        print(command)
+
         cursor.execute(command)
-        query = cursor.fetchall()[0]
+        query = cursor.fetchall()
+        if len(query) == 0:
+            return render_template("user/warning.html", text = "There is not any avaliable courier")
+        else:
+            query = query[0]
         
 
         content = ""
@@ -924,6 +928,10 @@ def orderArrayToStr(str):
 
     orderstr = ''.join(str).replace("[","").replace("]","").replace("'","")
     return orderstr
+
+@app.route('/showWarning')
+def showWarning():
+    return render_template("user/warning.html")
 
 if __name__ == '__main__':
     app.run(debug=True)
