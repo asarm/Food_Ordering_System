@@ -741,7 +741,7 @@ def getUserViewData():
     cheap_menus = cursor.fetchall()
 
     # fetch near restaurants
-    cursor.execute("SELECT lat-(?)+lng-(?) as distance,* FROM restaurant ORDER BY distance asc LIMIT 5", (lat, lng))
+    cursor.execute("SELECT Abs(lat-(?)+lng-(?)) as distance,* FROM restaurant ORDER BY distance asc LIMIT 5", (lat, lng))
     near_restaurants = cursor.fetchall()
 
 
