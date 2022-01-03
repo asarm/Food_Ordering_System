@@ -755,7 +755,7 @@ def myOrders():
         cursor = database.cursor()
 
     cursor.execute("SELECT foodOrder.totalPrice,foodOrder.orderDate,couriers.name, foodOrder.content, foodOrder.id, foodOrder.is_delivered, restaurant.restaurantName, foodOrder.is_reviewed, restaurant.id "
-                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?) INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id", (session["username"],))
+                   "FROM foodOrder INNER JOIN couriers ON couriers.id = foodOrder.courierID and foodOrder.userUserName=(?) INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id ORDER BY foodOrder.orderDate DESC", (session["username"],))
     orders = cursor.fetchall()
 
     return render_template("user/list_user_orders.html", username=session["username"], data=orders)
@@ -1151,10 +1151,10 @@ Returns all orders from db with or without any limit
 def getOrders(cursor, limit=None):
     if limit != None:
         cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
-                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id ORDER BY orderDate DESC LIMIT ?",(limit,))
+                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id ORDER BY foodOrder.orderDate DESC LIMIT ?",(limit,))
     else:
         cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
-                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id orderDate DESC")
+                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id ORDER BY foodOrder.orderDate DESC")
     query = cursor.fetchall()
     return query
 
