@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">AppName</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active"><a class="nav-link" href="/">{{username}}</a></li>
+          <li class="nav-item active"><a class="nav-link" href="/exit">Exit</a></li>
+        </ul>
+    </div>
+</nav>
+{% endblock %}
+
+{% block body %}
+<p>
+  <a class="btn btn-success" data-toggle="collapse" href="#filter" role="button" aria-expanded="false" aria-controls="filter">Filter</a>
+  <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#order" aria-expanded="false" aria-controls="order">Order</button>
+</p>
+
+<div class="row">
+  <div class="col">
+    <div class="collapse multi-collapse" id="filter">
+      <div class="card card-body">
+       <form action="/extras" method="POST">
+           <div class="form-group">
+            <label for="exampleInputEmail1">By Extra Name</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="name" placeholder="Enter Menu Name">
+          </div>
+          <div class="form-group">
+            <label for="exampleInputEmail1">By Price</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="price" placeholder="Enter Price">
+          </div>
+          <div class="form-group">
+            <label for="exampleInputEmail1">By Restaurant Name</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="restaurantName" placeholder="Enter Content">
+          </div>
+          <button type="submit" name="filter" value="filter" class="btn btn-success">Filter</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="collapse multi-collapse" id="order">
+      <div class="card card-body">
+        <form action="/extras" method="POST">
+            <div class="row">
+                <div class="col-md-1">
+                    By
+                </div>
+                <div class="col-md-2">
+                    <select class="form-control" id="orderBy" name="orderBy">
+                      <option>name</option>
+                      <option>price</option>
+                      <option>restaurantName</option>
+                   </select>
+                </div>
+           </div>
+          <button type="submit" name="order" value="order" class="btn btn-secondary">Order</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div>
+    <table class="table">
+      <thead class="thead-dark">
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Price</th>
+            <th scope="col">Restaurant Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%for i in range(data["extras"]|length)%}
+                <tr>
+                  <th scope="row">{{ i+1 }}</th>
+                  <td>{{ data["extras"][i][0] }}</td>
+                  <td>{{ data["extras"][i][1] }}₺</td>
+                  <td>{{ data["extras"][i][2] }}</td>
+        {%endfor%}
+      </tbody>
+    </table>
+  </form>
+</div>
+{% endblock %}

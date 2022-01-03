@@ -166,7 +166,7 @@ def homeView():
         return render_template('auth/login.html', title='Login')
     # login page is not posted but still there is an user in the session, user type = 1
     if session["user_type"] == 1:
-        data = getAllDbData(toGet=["users", "restaurant", "couriers", "menu","orders", "reviews"], limit=5)
+        data = getAllDbData(toGet=["users", "restaurant", "couriers", "menu","orders", "reviews", "extras"], limit=5)
         session["isFiltered"], session["filteredData"] = False, {}
 
         return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
@@ -313,6 +313,24 @@ def addMenu():
         return redirect(url_for("loginView", title="Home"))
 
     return render_template('admin/insert_operations/addMenu.html', title='Register', username=session["username"])
+
+@app.route("/addExtras", methods=["GET", "POST"])
+def addExtras():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    if request.method == "POST":
+        extraName = request.form["Extra"]
+        price = request.form["Price"]
+        restaurantName = request.form["RestaurantName"]
+
+        # inserting menu to db
+        cursor.execute("INSERT INTO extra(name, price, restaurantId) VALUES(?, ?, (SELECT id FROM restaurant WHERE restaurantName = (?)))",
+                       (extraName, price, restaurantName))
+        database.commit()
+        return redirect(url_for("loginView", title="Home"))
+
+    return render_template('admin/insert_operations/addExtras.html', title='Register', username=session["username"])
 
 '''
 Allows to list all users with their information 
@@ -595,6 +613,63 @@ def allMenus():
         session["isFiltered"] = False
 
     return render_template("admin/list_operations/list_menus.html", username=session["username"], data=session["filteredData"])
+
+@app.route("/extras", methods=["GET", "POST"])
+def allExtras():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+
+    # if filter or order button pressed
+    if request.method == "POST":
+        # if the user order by something
+        if 'order' in request.form:
+            orderBy = request.form['orderBy']
+
+            # if there is not any previously filtered data
+            if session["isFiltered"] == False:
+                command = "SELECT extra.name, extra.price, restaurant.restaurantName " \
+                          " FROM extra INNER JOIN restaurant ON extra.restaurantID = restaurant.id ORDER BY "+orderBy
+
+                cursor.execute(command)
+                query = cursor.fetchall()
+                # update session's filteredMenu array
+                session["filteredData"]["extras"] = query
+            else:
+                df = pd.DataFrame(session["filteredData"]["extras"],
+                                  columns=['name', 'price', 'restaurantName'])
+                df = df.sort_values(by=orderBy)
+                session["filteredData"]["extras"] = df.values.tolist()
+
+        if 'filter' in request.form:
+            filtered_cols, expected_vals = [], []
+            q = ""
+
+            for c in request.form.keys():
+                if request.form[c] != '' and request.form[c] != "filter":
+                    filtered_cols.append(c)
+                    expected_vals.append(request.form[c])
+
+            if len(expected_vals) > 0:
+                for index in range(0, len(expected_vals)):
+                    q += filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
+
+
+                command = "SELECT extra.name, extra.price, restaurant.restaurantName " \
+                          " FROM extra INNER JOIN restaurant ON extra.restaurantID = restaurant.id and "+q+" ORDER BY extra.id desc "
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["extras"] = query
+            else:
+                session["filteredData"] = getAllDbData(toGet=["extras"])
+            session["isFiltered"] = True
+
+    else:
+        session["filteredData"] = getAllDbData(toGet=["extras"])
+        session["isFiltered"] = False
+
+    return render_template("admin/list_operations/list_extras.html", username=session["username"], data=session["filteredData"])
+    
+    
 
 '''
 Allows to list all orders with their information 
@@ -1076,10 +1151,10 @@ Returns all orders from db with or without any limit
 def getOrders(cursor, limit=None):
     if limit != None:
         cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
-                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id LIMIT ?",(limit,))
+                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id ORDER BY orderDate DESC LIMIT ?",(limit,))
     else:
         cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
-                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id")
+                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id orderDate DESC")
     query = cursor.fetchall()
     return query
 
@@ -1091,6 +1166,14 @@ def getReviews(cursor, limit=None):
         cursor.execute("SELECT review.rating, restaurant.restaurantName, review.userUserName, review.reviewDate FROM review INNER JOIN restaurant ON review.restaurantId = restaurant.id ORDER BY review.reviewDate DESC LIMIT ?",(limit,))
     else:
         cursor.execute("SELECT review.rating, restaurant.restaurantName, review.userUserName, review.reviewDate FROM review INNER JOIN restaurant ON review.restaurantId = restaurant.id ORDER BY review.reviewDate DESC")
+    query = cursor.fetchall()
+    return query
+
+def getExtras(cursor, limit=None):
+    if limit != None:
+        cursor.execute("SELECT extra.name, extra.price, restaurant.restaurantName FROM extra INNER JOIN restaurant ON extra.restaurantID = restaurant.id ORDER BY extra.price DESC LIMIT ?",(limit,))
+    else:
+        cursor.execute("SELECT extra.name, extra.price, restaurant.restaurantName FROM extra INNER JOIN restaurant ON extra.restaurantID = restaurant.id ORDER BY extra.price DESC")
     query = cursor.fetchall()
     return query
 
@@ -1115,6 +1198,8 @@ def getAllDbData(toGet, limit=None):
             data[entity] = getOrders(cursor, limit)
         if entity == "reviews":
             data[entity] = getReviews(cursor, limit)
+        if entity == "extras":
+            data[entity] = getExtras(cursor, limit)
         else:
             pass
     return data
