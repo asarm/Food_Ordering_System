@@ -5,13 +5,15 @@ import requests
 import pandas as pd
 
 app = Flask(__name__)
-app.secret_key = "super secret key"
+app.secret_key = "secret key"
 
 DATABASE = 'system_db.db'
 
+# connecting the database
 with sqlite3.connect(DATABASE) as database:
     cursor = database.cursor()
 
+    # creating necessary tables
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS users(username TEXT PRIMARY KEY,email TEXT,password TEXT,user_type INTEGER, address Text,"
         " lat REAL , lng REAL, registred_date Date DEFAULT (datetime('now','localtime')))")
@@ -30,23 +32,9 @@ with sqlite3.connect(DATABASE) as database:
 
     
     cursor.execute("CREATE TABLE IF NOT EXISTS review(id INTEGER PRIMARY KEY,rating INTEGER,reviewDate DEFAULT (datetime('now','localtime')))")
-    
-    '''
-    cursor.execute("CREATE TABLE IF NOT EXISTS consistsOf (orderId INTEGER,menuId int,PRIMARY KEY(orderId,menuId),"
-                   "FOREIGN KEY (orderId) REFERENCES foodOrder(id),FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS has(menuId INTEGER,menuitemId INTEGER,PRIMARY KEY(menuId, menuItemId),"
-                   "FOREIGN KEY (menuId) REFERENCES menu(id) ON UPDATE CASCADE,"
-                   "FOREIGN KEY (menuitemId) REFERENCES menuItem(id) ON UPDATE CASCADE)")
-    
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS needs(menuItemId INTEGER,orderId INTEGER,menuId INTEGER,PRIMARY KEY(menuItemID, orderId, menuId),"
-        "FOREIGN KEY (menuItemId) REFERENCES menuItem(id) ON UPDATE CASCADE,"
-        "FOREIGN KEY (orderId) REFERENCES menu(id),FOREIGN KEY (menuId) REFERENCES consistsof(menuId) ON UPDATE CASCADE)")
-    '''
-
+    # Foreign keys
     try:
-        ## Foreign keys
         script = ("ALTER TABLE foodOrder ADD COLUMN courierID int REFERENCES couriers(id) ON UPDATE CASCADE;"
                   "ALTER TABLE foodOrder ADD COLUMN userUserName varchar(30) REFERENCES users(username) ON UPDATE CASCADE;"
                   "ALTER TABLE couriers ADD COLUMN orderId int REFERENCES foodOrder(id) ON UPDATE CASCADE;"
@@ -58,11 +46,16 @@ with sqlite3.connect(DATABASE) as database:
         pass
 
 
+'''
+checks the given email and password if they match what is in the database 
+redirects logged in accounts to correct page (user or admin)
+'''
 @app.route("/", methods=["GET", "POST"])
 def loginView():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # if login form submited
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
@@ -89,13 +82,16 @@ def loginView():
                 return redirect('home')
             elif user_type == 1:
                 return redirect('home')
-
+    # if login form is not submitted and there is not an user in the session
     if not session.get('logged_in'):
         return render_template('auth/login.html', title='Login')
+    # if form is not submitted but there is an user in the session
     else:
         return redirect('home')
 
-
+'''
+Allows registering as admin, user type is 1
+'''
 @app.route("/adminRegister", methods=["GET", "POST"])
 def adminRegisterView():
     with sqlite3.connect(DATABASE) as database:
@@ -116,7 +112,9 @@ def adminRegisterView():
 
     return render_template('auth/adminRegister.html', title='Admin Register')
 
-
+'''
+Allows registering as user (customer), user type is 0 
+'''
 @app.route("/register", methods=["GET", "POST"])
 def registerView():
     with sqlite3.connect(DATABASE) as database:
@@ -133,38 +131,53 @@ def registerView():
         cursor.execute("INSERT INTO users(username,email,password,user_type, address, lat, lng) VALUES(?,?,?,?,?,?,?)",
                        (username, email, password, 0, address.lower(), lat, lng))
         database.commit()
+
+        # after registering operation, redirect user to login form
         return redirect(url_for("loginView", title="Login"))
 
     return render_template('auth/register.html', title='Register')
 
-
+'''
+Displays important information based on the user type (0 or 1)
+if user type is 1, renders admin_home.html
+if user type is 0, renders homePage.html
+'''
 @app.route("/home", methods=["GET", "POST"])
 def homeView():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # controls if 'confirm delivered' button pressed on the homepage
     if request.method == "POST":
         confirmedOrderId = request.form["confirmedOrder"]
 
+        # makes the courier available, updates courier's coordinates and makes same as the customer's coordinates
         cursor.execute("UPDATE couriers SET is_available = 1, orderId = NULL, "
                        "lat = (SELECT users.lat FROM users, foodOrder WHERE users.username = foodOrder.userUserName and foodOrder.id = (?)),"
                        "lng = (SELECT users.lng FROM users, foodOrder WHERE users.username = foodOrder.userUserName and foodOrder.id = (?))"
                        "WHERE id = (SELECT id FROM couriers WHERE couriers.orderId=(?))", (confirmedOrderId,confirmedOrderId,confirmedOrderId))
+
+        # makes the order is delivered
         cursor.execute("UPDATE foodOrder SET is_delivered = 1 WHERE foodOrder.id=(?)", (confirmedOrderId,))
         database.commit()
 
+    # login page is not posted and there is not an user in the session, user type = 1
     if not session.get('logged_in'):
         return render_template('auth/login.html', title='Login')
+    # login page is not posted but still there is an user in the session, user type = 1
     if session["user_type"] == 1:
         data = getAllDbData(toGet=["users", "restaurant", "couriers", "menu","orders", "reviews"], limit=5)
         session["isFiltered"], session["filteredData"] = False, {}
 
         return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
+    # login page is not posted but still there is an user in the session, user type = 0
     else:
         data = getUserViewData()
         return render_template('user/homePage.html', title='Home', username=session["username"], data=data)
 
-
+'''
+Renders and handles a form for courier addition 
+'''
 @app.route("/addCourier", methods=["GET", "POST"])
 def addCourier():
     with sqlite3.connect(DATABASE) as database:
@@ -183,54 +196,69 @@ def addCourier():
 
     return render_template('admin/insert_operations/addCourier.html', username=session["username"])
 
-
+'''
+Renders and handles a form for update user information from user's profile 
+'''
 @app.route("/userSettings", methods=["GET", "POST"])
 def userSettings():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # selects all users
     cursor.execute("SELECT username, email, password, address, lat, lng FROM users")
 
+    # keep previous information of user before update
+    # these variables also displaying at userSettings.html page
     oldUsername = session['username']
     oldEmail = session['email']
     oldPassword = session['password']
     oldAddress = session['address']
 
     if request.method == "POST":
+        # keep new user information
         name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
         address = request.form["address"]
 
+        # if user did not change his/her address don't call searchCoordinates function unnecessarily
         if address != oldAddress:
             coordinates = searchCoordinates(address)
             lat, lng = coordinates[0], coordinates[1]
+            # update user information with new information
             cursor.execute("UPDATE users SET username=?,email=?,password=?,address=?,lat=?,lng=?"
                            " WHERE username =(?)", (name, email, password, address, lat, lng, oldUsername,))
         else:
+            # update user information with new information
             cursor.execute("UPDATE users SET username=?,email=?,password=?,address=?"
                            " WHERE username =(?)", (name, email, password, address, oldUsername,))
 
         database.commit()
 
+        # updating new variables at session
         updateUserInfo(name, 0, email, password, address)
+
         return redirect(url_for("homeView", title="Home"))
 
     return render_template('user/userSettings.html', username=oldUsername, address=oldAddress, email=oldEmail,
                            password=oldPassword)
 
-
+'''
+Allows admin to add new restaurant
+'''
 @app.route("/addRestaurant", methods=["GET", "POST"])
 def addRestaurant():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # if submit button pressed
     if request.method == "POST":
         name = request.form["name"]
         address = request.form["address"]
         coordinates = searchCoordinates(address)
         lat, lng = coordinates[0], coordinates[1]
 
+        # inserting to db
         cursor.execute(
             "INSERT INTO restaurant(restaurantName, address, lat, lng, isOpen, averageRating) VALUES(?, ?, ?, ?, ?, ?)",
             (name, address, lat, lng, 1, 0.0))
@@ -239,7 +267,9 @@ def addRestaurant():
 
     return render_template('admin/insert_operations/addRestaurant.html', username=session["username"])
 
-
+'''
+Allows admin to add new restaurant
+'''
 @app.route("/addUser", methods=["GET", "POST"])
 def addUser():
     with sqlite3.connect(DATABASE) as database:
@@ -253,13 +283,18 @@ def addUser():
         coordinates = searchCoordinates(address)
         lat, lng = coordinates[0], coordinates[1]
 
+        # inserting new user to db
         cursor.execute("INSERT INTO users(username,email,password,user_type, address, lat, lng) VALUES(?,?,?,?,?,?,?)",
                        (username, email, password, 0, address, lat, lng))
         database.commit()
+        # redicrects to login view, login view redirects home page again
         return redirect(url_for("loginView", title="Login"))
 
     return render_template('admin/insert_operations/addUser.html', title='Register', username=session["username"])
 
+'''
+Allows admin to add new menu
+'''
 @app.route("/addMenu", methods=["GET", "POST"])
 def addMenu():
     with sqlite3.connect(DATABASE) as database:
@@ -271,6 +306,7 @@ def addMenu():
         price = request.form["Price"]
         content = request.form["Content"]
 
+        # inserting menu to db
         cursor.execute("INSERT INTO menu(menuName, price, content, restaurantId) VALUES(?, ?, ?, (SELECT id FROM restaurant WHERE restaurantName = (?)))",
                        (menuName, price, content, restaurantName))
         database.commit()
@@ -278,32 +314,47 @@ def addMenu():
 
     return render_template('admin/insert_operations/addMenu.html', title='Register', username=session["username"])
 
+'''
+Allows admin to list all users with their information 
+'''
 @app.route("/users", methods=["GET", "POST"])
 def allUsers():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # if filter or order button pressed
     if request.method == "POST":
+        # if the user order by something
         if 'order' in request.form:
             orderBy = request.form['orderBy'].lower()
 
+            # if there is not previous filtered data
             if session["isFiltered"] == False:
+                # selects ordered data from db
                 command = "SELECT username,email,address,registred_date,user_type as type FROM users ORDER BY "+str(orderBy)
                 cursor.execute(command)
                 query = cursor.fetchall()
+                # updates filteredData array
                 session["filteredData"]["users"] = query
             else:
+                # if there is a filtered data at session, keeps them as a dataframe and orders them using dataframe's attribute
                 df = pd.DataFrame(session["filteredData"]["users"],
                                   columns=['username', 'email','address','registred_date','type'])
                 df = df.sort_values(by=orderBy)
+                # updates filteredData array
                 session["filteredData"]["users"] = df.values.tolist()
 
+        # if the user filter by something
         if 'filter' in request.form:
+            # these arrays keeps name of filtered columns and filtered values
             filtered_cols, expected_vals = [], []
+
+            # creates a sql command to filter
             q = ""
 
             for c in request.form.keys():
                 if request.form[c] != '' and request.form[c] != "filter":
+                    # if filtered by user_type
                     if request.form[c] == "on":
                         filtered_cols.append("user_type")
                         expected_vals.append(1)
@@ -311,7 +362,9 @@ def allUsers():
                         filtered_cols.append(c)
                         expected_vals.append(request.form[c])
 
+            # if filtered by anything
             if len(expected_vals) > 0:
+                # add user type filter firstly, if exists
                 if filtered_cols[0] != "user_type":
                     q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
                 else:
@@ -327,7 +380,11 @@ def allUsers():
                 command = "SELECT username,email,address,registred_date,user_type as type FROM users WHERE "+q
                 cursor.execute(command)
                 query = cursor.fetchall()
+
+                # updating filtering array at session
                 session["filteredData"]["users"] = query
+
+            # if nothing is filtered
             else:
                 session["filteredData"] = getAllDbData(toGet=["users"])
             session["isFiltered"] = True
@@ -343,25 +400,31 @@ def allRestaurants():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # if filter or order button pressed
     if request.method == "POST":
+        # if the user order by something
         if 'order' in request.form:
             orderBy = request.form['orderBy'].lower()
 
+            # if there is not previous filtered data
             if session["isFiltered"] == False:
                 command = "SELECT restaurantName as Name, address as Address, isOpen as Open, averageRating as Rating FROM restaurant ORDER BY "+str(orderBy)
                 cursor.execute(command)
                 query = cursor.fetchall()
                 session["filteredData"]["restaurant"] = query
             else:
+                # if there is a filtered data at session, keeps them as a dataframe and orders them using dataframe's attribute
                 df = pd.DataFrame(session["filteredData"]["restaurant"],
                                   columns=['name', 'address','open','rating'])
                 df = df.sort_values(by=orderBy)
                 session["filteredData"]["restaurant"] = df.values.tolist()
 
+        # if filtered by anything
         if 'filter' in request.form:
             filtered_cols, expected_vals = [], []
             q = ""
 
+            # checks each key to filter
             for c in request.form.keys():
                 if request.form[c] != '' and request.form[c] != "filter":
                     if request.form[c] == "on":
@@ -372,11 +435,13 @@ def allRestaurants():
                         expected_vals.append(request.form[c])
 
             if len(expected_vals) > 0:
+                # if filtered by is_open, adds it first
                 if filtered_cols[0] != "isOpen":
                     q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
                 else:
                     q += " isOpen = 1"
 
+                # looks other keys to filter
                 if len(expected_vals) > 1:
                     for index in range(1, len(expected_vals)):
                         if filtered_cols[index] != "isOpen":
@@ -384,6 +449,7 @@ def allRestaurants():
                     if filtered_cols.count("isOpen") > 0:
                         q += " and isOpen = 1"
 
+                # selects filtered restaurants
                 command = "SELECT restaurantName as Name, address as Address, isOpen as Open, averageRating as Rating FROM restaurant WHERE "+q
                 cursor.execute(command)
                 query = cursor.fetchall()
@@ -392,6 +458,7 @@ def allRestaurants():
                 session["filteredData"] = getAllDbData(toGet=["restaurant"])
             session["isFiltered"] = True
 
+    # if nothing filtered or ordered
     else:
         session["filteredData"] = getAllDbData(toGet=["restaurant"])
         session["isFiltered"] = False
@@ -892,7 +959,9 @@ def getReviews():
 
     return render_template("admin/list_operations/list_reviews.html", username=session["username"], data=session["filteredData"])
 
-
+'''
+Updates user information at session 
+'''
 def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):
     session["username"] = username
     session["user_type"] = user_type
@@ -997,25 +1066,7 @@ def getAllDbData(toGet, limit=None):
         else:
             pass
     return data
-'''
-def canReview(cursor):
 
-    cursor.execute("SELECT restaurant.id as restId, foodOrder.restaurantId as orderId, users.username FROM restaurant, foodOrder "
-                   "INNER JOIN users ON users.username = foodOrder.userUserName "
-                   " WHERE (restaurant.id, users.username) NOT IN (SELECT review.restaurantId, review.userUserName FROM review) "
-                   "AND foodOrder.restaurantId = restaurant.id AND username=(?)",
-                   (session["username"],))
-    
-
-    query = cursor.fetchall()
-    print(query)
-    reviewedRests = []
-
-    for id in query:
-        reviewedRests.append(id[0])
-
-    return reviewedRests
-'''
 def orderArrayToStr(str):
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
