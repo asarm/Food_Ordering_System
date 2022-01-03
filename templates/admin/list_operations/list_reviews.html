@@ -25,18 +25,18 @@
   <div class="col">
     <div class="collapse multi-collapse" id="filter">
       <div class="card card-body">
-       <form action="/menus" method="POST">
+       <form action="/reviews" method="POST">
            <div class="form-group">
-            <label for="exampleInputEmail1">By Menu Name</label>
-            <input type="text" class="form-control" id="exampleInputEmail1" name="menuName" placeholder="Enter Menu Name">
+            <label for="exampleInputEmail1">By Username</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="userUserName" placeholder="Enter Username">
           </div>
           <div class="form-group">
-            <label for="exampleInputEmail1">By Price</label>
-            <input type="text" class="form-control" id="exampleInputEmail1" name="price" placeholder="Enter Price">
+            <label for="exampleInputEmail1">By Restaurant Name</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="restaurantName" placeholder="Enter Restaurant Name">
           </div>
           <div class="form-group">
-            <label for="exampleInputEmail1">By Content</label>
-            <input type="text" class="form-control" id="exampleInputEmail1" name="content" placeholder="Enter Content">
+            <label for="exampleInputEmail1">By Rating</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" name="rating" placeholder="Enter Rating">
           </div>
           <button type="submit" name="filter" value="filter" class="btn btn-success">Filter</button>
         </form>
@@ -46,16 +46,17 @@
   <div class="col">
     <div class="collapse multi-collapse" id="order">
       <div class="card card-body">
-        <form action="/menus" method="POST">
+        <form action="/reviews" method="POST">
             <div class="row">
                 <div class="col-md-1">
                     By
                 </div>
                 <div class="col-md-2">
                     <select class="form-control" id="orderBy" name="orderBy">
-                      <option>menuName</option>
-                      <option>price</option>
-                      <option>content</option>
+                      <option>Username</option>
+                      <option>RestaurantName</option>
+                      <option>Rating</option>
+                      <option>ReviewDate</option>
                    </select>
                 </div>
            </div>
@@ -71,21 +72,21 @@
       <thead class="thead-dark">
         <tr>
             <th scope="col">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">Price</th>
-            <th scope="col">Content</th>
+            <th scope="col">Username</th>
             <th scope="col">Restaurant Name</th>
-        </tr>
-      </thead>
-      <tbody>
-        {%for i in range(data["menu"]|length)%}
-                <tr>
-                  <th scope="row">{{ i+1 }}</th>
-                  <td>{{ data["menu"][i][1] }}</td>
-                  <td>{{ data["menu"][i][2] }}₺</td>
-                  <td>{{ data["menu"][i][3] }}</td>
-                  <td>{{ data["menu"][i][4] }}</td>
-                </tr>
+            <th scope="col">Rating</th>
+            <th scope="col">Review Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {%for i in range(data["reviews"]|length)%}
+          <tr>
+            <th scope="row">{{ i+1 }}</th>
+              <td>{{ data["reviews"][i][2] }}</td>
+              <td>{{ data["reviews"][i][1] }}</td>
+              <td>{{ data["reviews"][i][0] }}</td>
+            <td>{{ data["reviews"][i][3] }}</td>
+          </tr>
         {%endfor%}
       </tbody>
     </table>

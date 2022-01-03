@@ -80,7 +80,7 @@
                   <td>{{ data["cheap_menus"][i][0] }}</td>
                   <td>{{ data["cheap_menus"][i][1] }}</td>
                   <td>{{ data["cheap_menus"][i][2] }} </td>
-                  <td>{{ data["cheap_menus"][i][3] }} $</td>
+                  <td>{{ data["cheap_menus"][i][3] }}₺</td>
                   <td>{{ data["cheap_menus"][i][6] }} </td>
                   {% if data["cheap_menus"][i][7] == 0 %}
                         <td><button class="btn btn-secondary" disabled name="selectedMenu" value="{{ data["cheap_menus"][i][4] }}">Closed</button></td>
@@ -119,7 +119,7 @@
               {%for i in range(data["orders"]|length)%}
                 <tr>
                   <td>{{ data["orders"][i][6] }} </td>
-                  <td>{{ data["orders"][i][0] }} $</td>
+                  <td>{{ data["orders"][i][0] }}₺</td>
                   <td>{{ data["orders"][i][2] }}</td>
                   <td>{{ data["orders"][i][3] }}</td>
                   <td>{{ data["orders"][i][1] }}</td>

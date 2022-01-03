@@ -156,7 +156,7 @@ def homeView():
     if not session.get('logged_in'):
         return render_template('auth/login.html', title='Login')
     if session["user_type"] == 1:
-        data = getAllDbData(toGet=["users", "restaurant", "couriers", "menu", "restaurantName","orders"], limit=5)
+        data = getAllDbData(toGet=["users", "restaurant", "couriers", "menu","orders", "reviews"], limit=5)
         session["isFiltered"], session["filteredData"] = False, {}
 
         return render_template('admin/adminHome.html', title='Admin Page', username=session["username"], data=data)
@@ -697,9 +697,9 @@ def confirmOrder():
         lng = query[1]
 
         if lat < 0:
-            lat = -lat
+            lat = lat*-1
         if lng < 0:
-            lng = -lng
+            lng = lng*-1
 
         command = "SELECT lat-"+str(lat)+"+lng-"+str(lng)+" as distance, id as courierID FROM couriers WHERE is_available=1 ORDER BY distance asc LIMIT 1";
 
@@ -750,7 +750,7 @@ def getUserViewData():
     cheap_menus = cursor.fetchall()
 
     # fetch near restaurants
-    cursor.execute("SELECT Abs(lat-(?)+lng-(?)) as distance,* FROM restaurant ORDER BY distance asc LIMIT 5", (lat, lng))
+    cursor.execute("SELECT Abs((lat-?)*(lat-?) + (lng-?)*(lng-?)) as distance,* FROM restaurant ORDER BY distance asc LIMIT 5", (lat, lat, lng, lng))
     near_restaurants = cursor.fetchall()
 
 
@@ -841,6 +841,57 @@ def editRestaurant():
 
     return render_template("admin/insert_operations/editRestaurant.html", username=session["username"], restId=restID, restInfo=query)
 
+@app.route("/reviews",  methods=["GET","POST"])
+def getReviews():
+    with sqlite3.connect(DATABASE) as database:
+        cursor = database.cursor()
+    
+    if request.method == "POST":
+        if 'order' in request.form:
+            orderBy = request.form['orderBy'].lower()
+
+            if session["isFiltered"] == False:
+                command = "SELECT review.rating, restaurant.restaurantName as restaurantname, review.userUserName as username, review.reviewDate as reviewdate FROM review INNER JOIN restaurant ON review.restaurantId = restaurant.id ORDER BY "+orderBy
+                print(command)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["reviews"] = query
+            else:
+                df = pd.DataFrame(session["filteredData"]["reviews"],
+                                  columns=['rating','restaurantname', 'username', 'reviewdate'])
+                df = df.sort_values(by=orderBy)
+                session["filteredData"]["reviews"] = df.values.tolist()
+
+        if 'filter' in request.form:
+            filtered_cols, expected_vals = [], []
+            q = ""
+
+            for c in request.form.keys():
+                if request.form[c] != '' and request.form[c] != "filter":
+                    filtered_cols.append(c)
+                    expected_vals.append(request.form[c])
+
+            if len(expected_vals) > 0:
+                for index in range(0, len(expected_vals)):
+                    q += filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
+
+
+                command = "SELECT review.rating, restaurant.restaurantName, review.userUserName, review.reviewDate as reviewdate FROM review INNER JOIN restaurant ON review.restaurantId = restaurant.id and "+q+" ORDER BY review.id desc "
+                print("Command", command)
+                cursor.execute(command)
+                query = cursor.fetchall()
+                session["filteredData"]["reviews"] = query
+            else:
+                session["filteredData"] = getAllDbData(toGet=["reviews"])
+            session["isFiltered"] = True
+
+    else:
+        session["filteredData"] = getAllDbData(toGet=["reviews"])
+        session["isFiltered"] = False
+    
+
+    return render_template("admin/list_operations/list_reviews.html", username=session["username"], data=session["filteredData"])
+
 
 def updateUserInfo(username, user_type, email, password, address, lat=None, lng=None):
     session["username"] = username
@@ -872,46 +923,59 @@ def searchCoordinates(address):
 def getUsers(cursor, limit=None):
     if limit != None:
         cursor.execute(
-            "SELECT username,email,address,registred_date,user_type FROM users ORDER BY registred_date desc LIMIT ?", (limit,))
+            "SELECT username,email,address,registred_date,user_type FROM users ORDER BY registred_date DESC LIMIT ?", (limit,))
     else:
-        cursor.execute("SELECT username,email,address,registred_date,user_type FROM users ORDER BY registred_date desc")
+        cursor.execute("SELECT username,email,address,registred_date,user_type FROM users ORDER BY registred_date DESC")
     query = cursor.fetchall()
 
     return query
 
 
 def getCouriers(cursor, limit=None):
-    cursor.execute("SELECT id,name, is_available,lat,lng,orderId FROM couriers ORDER BY id desc")
+    if limit != None:
+        cursor.execute("SELECT id,name, is_available,lat,lng,orderId FROM couriers ORDER BY id DESC LIMIT ?", (limit,))
+    else:    
+        cursor.execute("SELECT id,name, is_available,lat,lng,orderId FROM couriers ORDER BY id DESC")
     query = cursor.fetchall()
 
     return query
 
 
 def getRestaurants(cursor, limit=None):
-    cursor.execute("SELECT restaurantName,address,isOpen,averageRating,id FROM restaurant ORDER BY id desc")
+    if limit != None:
+        cursor.execute("SELECT restaurantName,address,isOpen,averageRating,id FROM restaurant ORDER BY averageRating DESC LIMIT ?",(limit,))
+    else:
+        cursor.execute("SELECT restaurantName,address,isOpen,averageRating,id FROM restaurant ORDER BY averageRating DESC")
     query = cursor.fetchall()
 
     return query
 
 def getMenus(cursor, limit=None):
-    cursor.execute("SELECT menu.id, menuName, price, content, restaurant.restaurantName, restaurant.isOpen FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY menu.id desc")
+    if limit != None:
+        cursor.execute("SELECT menu.id, menuName, price, content, restaurant.restaurantName, restaurant.isOpen FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY menu.id DESC LIMIT ?", (limit,))
+    else:
+        cursor.execute("SELECT menu.id, menuName, price, content, restaurant.restaurantName, restaurant.isOpen FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY menu.id DESC")
     query = cursor.fetchall()
     return query
 
 def getOrders(cursor, limit=None):
-    cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
+    if limit != None:
+        cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
+                   "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id LIMIT ?",(limit,))
+    else:
+        cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
                    "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id")
-
     query = cursor.fetchall()
     return query
 
-
-def getRestaurantName(cursor, limit=None):
-    cursor.execute("SELECT restaurant.restaurantName, menu.menuName, menu.price, menu.id, restaurant.id, menu.content "
-                   "FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id")
+def getReviews(cursor, limit=None):
+    if limit != None:
+        cursor.execute("SELECT review.rating, restaurant.restaurantName, review.userUserName, review.reviewDate FROM review INNER JOIN restaurant ON review.restaurantId = restaurant.id ORDER BY review.reviewDate DESC LIMIT ?",(limit,))
+    else:
+        cursor.execute("SELECT review.rating, restaurant.restaurantName, review.userUserName, review.reviewDate FROM review INNER JOIN restaurant ON review.restaurantId = restaurant.id ORDER BY review.reviewDate DESC")
     query = cursor.fetchall()
-
     return query
+
 
 def getAllDbData(toGet, limit=None):
     with sqlite3.connect(DATABASE) as database:
@@ -926,10 +990,10 @@ def getAllDbData(toGet, limit=None):
             data[entity] = getRestaurants(cursor, limit)
         if entity == "menu":
             data[entity] = getMenus(cursor, limit)
-        if entity == "restaurantName":
-            data[entity] = getRestaurantName(cursor, limit)
         if entity == "orders":
             data[entity] = getOrders(cursor, limit)
+        if entity == "reviews":
+            data[entity] = getReviews(cursor, limit)
         else:
             pass
     return data

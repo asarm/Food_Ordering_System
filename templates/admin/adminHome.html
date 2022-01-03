@@ -167,13 +167,13 @@
                </tr>
              </thead>
              <tbody>
-               {%for i in range(data["restaurantName"]|length)%}
+               {%for i in range(data["menu"]|length)%}
                <tr>
                  <th scope="row">{{ i+1 }}</th>
-                 <td>{{ data["restaurantName"][i][1] }}</td>
-                 <td>{{ data["restaurantName"][i][0] }}</td>
-                 <td>{{ data["restaurantName"][i][2] }}$</td>
-                 <td>{{ data["restaurantName"][i][5] }}</td>
+                 <td>{{ data["menu"][i][1] }}</td>
+                 <td>{{ data["menu"][i][4] }}</td>
+                 <td>{{ data["menu"][i][2] }}₺</td>
+                 <td>{{ data["menu"][i][3] }}</td>
                </tr>
              {%endfor%}
              </tbody>
@@ -181,6 +181,36 @@
          </li>
        </ul>
     </div>
- </center>
+    <div class="col-md-6" style="z-index: 0;">
+      <ul class="list-group">
+       <li class="list-group-item active">Reviews <a class="btn btn-sm btn-success" href="/reviews" id="See All Couriers">See All</a>
+       <li class="list-group-item">
+         <table class="table table-hover">
+           <thead>
+             <tr>
+               <th scope="col">#</th>
+               <th scope="col">Username</th>
+               <th scope="col">Restaurant Name</th>
+               <th scope="col">Rating</th>
+               <th scope="col">Review Date</th>
+             </tr>
+           </thead>
+           <tbody>
+             {%for i in range(data["reviews"]|length)%}
+             <tr>
+               <th scope="row">{{ i+1 }}</th>
+                 <td>{{ data["reviews"][i][3] }}</td>
+                 <td>{{ data["reviews"][i][2] }}</td>
+                 <td>{{ data["reviews"][i][1] }}</td>
+               <td>{{ data["reviews"][i][4] }}</td>
+             </tr>
+           {%endfor%}
+           </tbody>
+         </table>
+       </li>
+     </ul>
+  </div>
+</div>
+</center>
 
 {% endblock %}
