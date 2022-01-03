@@ -199,10 +199,10 @@
              {%for i in range(data["reviews"]|length)%}
              <tr>
                <th scope="row">{{ i+1 }}</th>
-                 <td>{{ data["reviews"][i][3] }}</td>
                  <td>{{ data["reviews"][i][2] }}</td>
                  <td>{{ data["reviews"][i][1] }}</td>
-               <td>{{ data["reviews"][i][4] }}</td>
+                 <td>{{ data["reviews"][i][0] }}</td>
+               <td>{{ data["reviews"][i][3] }}</td>
              </tr>
            {%endfor%}
            </tbody>
