@@ -470,10 +470,13 @@ def allCouriers():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # if filter or order button pressed
     if request.method == "POST":
+        # if the user order by something
         if 'order' in request.form:
             orderBy = request.form['orderBy'].lower()
 
+            # if there is not any previously filtered data
             if session["isFiltered"] == False:
                 command = "SELECT id as Number, name as Name, is_available as Availability FROM couriers ORDER BY "+str(orderBy)
                 cursor.execute(command)
@@ -485,12 +488,15 @@ def allCouriers():
                 df = df.sort_values(by=orderBy)
                 session["filteredData"]["couriers"] = df.values.tolist()
 
+        # if the user filter by something
         if 'filter' in request.form:
             filtered_cols, expected_vals = [], []
             q = ""
 
+            # checking each key to filter
             for c in request.form.keys():
                 if request.form[c] != '' and request.form[c] != "filter":
+                    # firstly, controls if the user filters by is_available
                     if request.form[c] == "on":
                         filtered_cols.append("is_available")
                         expected_vals.append(1)
@@ -499,6 +505,7 @@ def allCouriers():
                         expected_vals.append(request.form[c])
 
             if len(expected_vals) > 0:
+                # firstly, controls if the user filters by is_available
                 if filtered_cols[0] != "is_available":
                     q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
                 else:
@@ -530,16 +537,20 @@ def allMenus():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # if filter or order button pressed
     if request.method == "POST":
+        # if the user order by something
         if 'order' in request.form:
             orderBy = request.form['orderBy']
 
+            # if there is not any previously filtered data
             if session["isFiltered"] == False:
                 command = "SELECT menu.id, menuName, price, content, restaurant.restaurantName " \
                           " FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY "+orderBy
-                print(command)
+
                 cursor.execute(command)
                 query = cursor.fetchall()
+                # update session's filteredMenu array
                 session["filteredData"]["menu"] = query
             else:
                 df = pd.DataFrame(session["filteredData"]["menu"],
@@ -563,7 +574,6 @@ def allMenus():
 
                 command = "SELECT menu.id, menuName, price, content, restaurant.restaurantName " \
                           " FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id and "+q+" ORDER BY menu.id desc "
-                print("Command", command)
                 cursor.execute(command)
                 query = cursor.fetchall()
                 session["filteredData"]["menu"] = query
@@ -667,10 +677,7 @@ def selectRestaurant():
     data = query
     session["menus"] = []
 
-    '''
-    toReview = canReview(cursor)
-    '''
-
+    print(data)
     return render_template('user/selectRestaurant.html', title='Restaurants', username=session["username"], data=data)
 
 @app.route("/selectMenu", methods=["GET", "POST"])
@@ -1045,7 +1052,6 @@ def getReviews(cursor, limit=None):
     query = cursor.fetchall()
     return query
 
-
 def getAllDbData(toGet, limit=None):
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
@@ -1067,11 +1073,14 @@ def getAllDbData(toGet, limit=None):
             pass
     return data
 
+'''
+Splits orders array and converts them to a single string  
+'''
 def orderArrayToStr(str):
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
-    orderstr = ''.join(str).replace("[","").replace("]","").replace("'","")
+    orderstr = ''.join(str).replace("[","").replace("]",", ").replace("'","")
     return orderstr
 
 @app.route('/showWarning')
