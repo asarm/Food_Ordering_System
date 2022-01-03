@@ -21,7 +21,7 @@ with sqlite3.connect(DATABASE) as database:
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS couriers(id INTEGER PRIMARY KEY,name TEXT,is_available TEXT,lat REAL,lng)")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS extra(id INTEGER PRIMARY KEY,name varchar(200), price REAL)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS extra(id INTEGER PRIMARY KEY,name varchar(200), price REAL, restaurantID INTEGER, FOREIGN KEY (restaurantID) REFERENCES restaurant(id))")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS menu(id INTEGER PRIMARY KEY,menuName varchar(30), price REAL, content TEXT)")
 
@@ -315,7 +315,7 @@ def addMenu():
     return render_template('admin/insert_operations/addMenu.html', title='Register', username=session["username"])
 
 '''
-Allows admin to list all users with their information 
+Allows to list all users with their information 
 '''
 @app.route("/users", methods=["GET", "POST"])
 def allUsers():
@@ -395,6 +395,9 @@ def allUsers():
 
     return render_template("admin/list_operations/list_users.html", username=session["username"], data=session["filteredData"])
 
+'''
+Allows to list all restaurants with their information 
+'''
 @app.route("/restaurants", methods=["GET", "POST"])
 def allRestaurants():
     with sqlite3.connect(DATABASE) as database:
@@ -465,6 +468,9 @@ def allRestaurants():
 
     return render_template("admin/list_operations/list_restaurants.html", username=session["username"], data=session["filteredData"])
 
+'''
+Allows to list all couriers with their information 
+'''
 @app.route("/couriers", methods=["GET", "POST"])
 def allCouriers():
     with sqlite3.connect(DATABASE) as database:
@@ -532,6 +538,9 @@ def allCouriers():
 
     return render_template("admin/list_operations/list_couriers.html", username=session["username"], data=session["filteredData"])
 
+'''
+Allows list all menus with their information 
+'''
 @app.route("/menus", methods=["GET", "POST"])
 def allMenus():
     with sqlite3.connect(DATABASE) as database:
@@ -587,15 +596,20 @@ def allMenus():
 
     return render_template("admin/list_operations/list_menus.html", username=session["username"], data=session["filteredData"])
 
+'''
+Allows to list all orders with their information 
+'''
 @app.route("/orders", methods=["GET", "POST"])
 def allOrders():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
+    # if the user filtered or ordered by something
     if request.method == "POST":
+        # if the user ordered by something
         if 'order' in request.form:
             orderBy = request.form['orderBy']
-
+            # if there is not any previously filtered data
             if session["isFiltered"] == False:
                 "SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered,  userUserName, "
                 "FROM foodOrder INNER JOIN couriers ON foodOrder.courierID = couriers.id INNER JOIN restaurant ON foodOrder.restaurantId = restaurant.id"
@@ -611,7 +625,7 @@ def allOrders():
                                   columns=['id','content', 'orderDate','totalPrice','is_delivered','courier_name','userUserName', 'restaurant_name'])
                 df = df.sort_values(by=orderBy)
                 session["filteredData"]["orders"] = df.values.tolist()
-
+        # if the user filter foodOrders by something
         if 'filter' in request.form:
             filtered_cols, expected_vals = [], []
             q = ""
@@ -657,6 +671,9 @@ def allOrders():
     return render_template("admin/list_operations/list_orders.html", username=session["username"],
                            data=session["filteredData"])
 
+'''
+List all orders of current user
+'''
 @app.route("/myOrders", methods=["GET", "POST"])
 def myOrders():
     with sqlite3.connect(DATABASE) as database:
@@ -668,6 +685,9 @@ def myOrders():
 
     return render_template("user/list_user_orders.html", username=session["username"], data=orders)
 
+'''
+Lists all of the restaurants and allows to select
+'''
 @app.route("/selectRestaurant", methods=["GET", "POST"])
 def selectRestaurant():
     with sqlite3.connect(DATABASE) as database:
@@ -677,7 +697,6 @@ def selectRestaurant():
     data = query
     session["menus"] = []
 
-    print(data)
     return render_template('user/selectRestaurant.html', title='Restaurants', username=session["username"], data=data)
 
 @app.route("/selectMenu", methods=["GET", "POST"])
@@ -685,20 +704,18 @@ def selectMenu():
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
 
-    command = "SELECT id,name,price FROM extra"
-    cursor.execute(command)
-    query = cursor.fetchall()
-    session["extras"] = query
-
     if request.method == "POST":
-        print(request.form)
         if "selectedRestaurant" in request.form.keys():
             selectedRestaurantId = request.form["selectedRestaurant"]
 
-            command = "SELECT id,menuName,restaurantId,price,content FROM menu WHERE restaurantId="+selectedRestaurantId
+            command = "SELECT id,name,price FROM extra WHERE restaurantID="+selectedRestaurantId
             cursor.execute(command)
             query = cursor.fetchall()
-            print(selectedRestaurantId)
+            extras = query
+
+            command = "SELECT id,menuName,restaurantId,price,content FROM menu WHERE restaurantId="+str(f"'{selectedRestaurantId}'")
+            cursor.execute(command)
+            query = cursor.fetchall()
             session["menus"] = query
 
         if "selectedMenu" in request.form.keys():
@@ -712,12 +729,17 @@ def selectMenu():
 
             session["menus"] = query
 
+            command = "SELECT id,name,price FROM extra WHERE restaurantID=" + str(f"'{selectedRestaurantId}'")
+            cursor.execute(command)
+            query = cursor.fetchall()
+            extras = query
+
             return render_template("user/selectMenu.html", username=session["username"], data=session["menus"],
-                                   extras=session["extras"], preselected=selected)
+                                   extras=extras, preselected=selected)
 
-        return render_template("user/selectMenu.html", username=session["username"], data=session["menus"], extras= session["extras"])
+        return render_template("user/selectMenu.html", username=session["username"], data=session["menus"], extras=extras)
 
-    return render_template("user/selectMenu.html", username=session["username"], data=session["menus"], extras= session["extras"])
+    return render_template("user/selectMenu.html", username=session["username"], data=session["menus"], extras= [])
 
 @app.route("/confirmOrder", methods=["GET", "POST"])
 def confirmOrder():
@@ -835,6 +857,9 @@ def getUserViewData():
     }
     return info
 
+'''
+Clear everything from session
+'''
 @app.route("/exit", methods=["GET"])
 def exit():
     session.clear()
@@ -980,7 +1005,9 @@ def updateUserInfo(username, user_type, email, password, address, lat=None, lng=
         session["lng"] = lng
     session["logged_in"] = True
 
-
+'''
+Fetches coordinates of given address and returns it's latitude and longitude
+'''
 def searchCoordinates(address):
     address = address.replace(" ", "+")
     base_url = "http://py4e-data.dr-chuck.net/json?"
@@ -995,7 +1022,9 @@ def searchCoordinates(address):
 
     return lat, lng
 
-
+'''
+Returns all users from db with or without any limit
+'''
 def getUsers(cursor, limit=None):
     if limit != None:
         cursor.execute(
@@ -1006,7 +1035,9 @@ def getUsers(cursor, limit=None):
 
     return query
 
-
+'''
+Returns all couriers from db with or without any limit
+'''
 def getCouriers(cursor, limit=None):
     if limit != None:
         cursor.execute("SELECT id,name, is_available,lat,lng,orderId FROM couriers ORDER BY id DESC LIMIT ?", (limit,))
@@ -1016,7 +1047,9 @@ def getCouriers(cursor, limit=None):
 
     return query
 
-
+'''
+Returns all restaurants from db with or without any limit
+'''
 def getRestaurants(cursor, limit=None):
     if limit != None:
         cursor.execute("SELECT restaurantName,address,isOpen,averageRating,id FROM restaurant ORDER BY averageRating DESC LIMIT ?",(limit,))
@@ -1026,6 +1059,9 @@ def getRestaurants(cursor, limit=None):
 
     return query
 
+'''
+Returns all menus from db with or without any limit
+'''
 def getMenus(cursor, limit=None):
     if limit != None:
         cursor.execute("SELECT menu.id, menuName, price, content, restaurant.restaurantName, restaurant.isOpen FROM menu INNER JOIN restaurant ON menu.restaurantId = restaurant.id ORDER BY menu.id DESC LIMIT ?", (limit,))
@@ -1034,6 +1070,9 @@ def getMenus(cursor, limit=None):
     query = cursor.fetchall()
     return query
 
+'''
+Returns all orders from db with or without any limit
+'''
 def getOrders(cursor, limit=None):
     if limit != None:
         cursor.execute("SELECT foodOrder.id, content, orderDate, totalPrice, is_delivered, couriers.name, userUserName, restaurant.restaurantName "
@@ -1044,6 +1083,9 @@ def getOrders(cursor, limit=None):
     query = cursor.fetchall()
     return query
 
+'''
+Returns all reviews from db with or without any limit
+'''
 def getReviews(cursor, limit=None):
     if limit != None:
         cursor.execute("SELECT review.rating, restaurant.restaurantName, review.userUserName, review.reviewDate FROM review INNER JOIN restaurant ON review.restaurantId = restaurant.id ORDER BY review.reviewDate DESC LIMIT ?",(limit,))
@@ -1052,6 +1094,10 @@ def getReviews(cursor, limit=None):
     query = cursor.fetchall()
     return query
 
+'''
+Returns all entities from db with or without any limit.
+toGet argument should be an array
+'''
 def getAllDbData(toGet, limit=None):
     with sqlite3.connect(DATABASE) as database:
         cursor = database.cursor()
@@ -1081,6 +1127,7 @@ def orderArrayToStr(str):
         cursor = database.cursor()
 
     orderstr = ''.join(str).replace("[","").replace("]",", ").replace("'","")
+    orderstr = orderstr.replace(', ,','')
     return orderstr
 
 @app.route('/showWarning')
