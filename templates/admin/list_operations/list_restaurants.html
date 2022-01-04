@@ -38,9 +38,13 @@
             <label for="exampleInputEmail1">By Average Rating</label>
             <input type="text" class="form-control" id="exampleInputEmail1" name="averageRating" placeholder="Enter Average Rating">
           </div>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" name="isOpen" id="exampleCheck1">
+           <div class="form-check">
+            <input type="radio" class="form-check-input" name="isOpen" id="exampleCheck1" value="1">
             <label class="form-check-label" for="exampleCheck1">is open</label>
+          </div>
+          <div class="form-check">
+            <input type="radio" class="form-check-input" name="isOpen" id="exampleCheck1" value="0">
+            <label class="form-check-label" for="exampleCheck1">is close</label>
           </div>
           <button type="submit" name="filter" value="filter" class="btn btn-success">Filter</button>
         </form>
