@@ -342,6 +342,8 @@ def allUsers():
 
     # if filter or order button pressed
     if request.method == "POST":
+        print(request.form)
+        print(request.form.keys())
         # if the user order by something
         if 'order' in request.form:
             orderBy = request.form['orderBy'].lower()
@@ -370,30 +372,35 @@ def allUsers():
             # creates a sql command to filter
             q = ""
 
+            # if filtered by user_type
+            if 'user_type' in request.form.keys():
+                if request.form["user_type"] == "1":
+                    filtered_cols.append("user_type")
+                    expected_vals.append(1)
+                else:
+                    filtered_cols.append("user_type")
+                    expected_vals.append(0)
+
+            # if filtered by anything except user type
             for c in request.form.keys():
-                if request.form[c] != '' and request.form[c] != "filter":
-                    # if filtered by user_type
-                    if request.form[c] == "on":
-                        filtered_cols.append("user_type")
-                        expected_vals.append(1)
-                    else:
-                        filtered_cols.append(c)
-                        expected_vals.append(request.form[c])
+                if request.form[c] != '' and request.form[c] != "filter" and c !='user_type':
+                    filtered_cols.append(c)
+                    expected_vals.append(request.form[c])
 
             # if filtered by anything
             if len(expected_vals) > 0:
                 # add user type filter firstly, if exists
                 if filtered_cols[0] != "user_type":
                     q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
-                else:
+                elif expected_vals[0] == 1:
                     q += " user_type = 1"
+                else:
+                    q += " user_type = 0"
 
                 if len(expected_vals) > 1:
                     for index in range(1, len(expected_vals)):
                         if filtered_cols[index] != "user_type":
                             q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
-                    if filtered_cols.count("user_type") > 0:
-                        q += " and user_type = 1"
 
                 command = "SELECT username,email,address,registred_date,user_type as type FROM users WHERE "+q
                 cursor.execute(command)
@@ -445,13 +452,18 @@ def allRestaurants():
             filtered_cols, expected_vals = [], []
             q = ""
 
+            if 'isOpen' in request.form.keys():
+                if request.form["isOpen"] == "1":
+                    filtered_cols.append("isOpen")
+                    expected_vals.append(1)
+                else:
+                    filtered_cols.append("isOpen")
+                    expected_vals.append(0)
+
             # checks each key to filter
             for c in request.form.keys():
                 if request.form[c] != '' and request.form[c] != "filter":
-                    if request.form[c] == "on":
-                        filtered_cols.append("isOpen")
-                        expected_vals.append(1)
-                    else:
+                    if c != 'isOpen':
                         filtered_cols.append(c)
                         expected_vals.append(request.form[c])
 
@@ -459,16 +471,16 @@ def allRestaurants():
                 # if filtered by is_open, adds it first
                 if filtered_cols[0] != "isOpen":
                     q += filtered_cols[0]+" LIKE "+f"'%{expected_vals[0]}%'"
-                else:
+                elif expected_vals[0] == 1:
                     q += " isOpen = 1"
+                else:
+                    q += " isOpen = 0"
 
                 # looks other keys to filter
                 if len(expected_vals) > 1:
                     for index in range(1, len(expected_vals)):
                         if filtered_cols[index] != "isOpen":
                             q += " and " + filtered_cols[index]+" LIKE " + f"'%{expected_vals[index]}%'"
-                    if filtered_cols.count("isOpen") > 0:
-                        q += " and isOpen = 1"
 
                 # selects filtered restaurants
                 command = "SELECT restaurantName as Name, address as Address, isOpen as Open, averageRating as Rating FROM restaurant WHERE "+q
@@ -877,7 +889,7 @@ def confirmOrder():
         cursor.execute(command)
         query = cursor.fetchall()
         if len(query) == 0:
-            return render_template("user/warning.html", text = "There is no avaliable courier")
+            return render_template("user/warning.html", text = "There is not any avaliable courier")
         else:
             query = query[0]
         
