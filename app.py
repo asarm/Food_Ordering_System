@@ -877,7 +877,7 @@ def confirmOrder():
         cursor.execute(command)
         query = cursor.fetchall()
         if len(query) == 0:
-            return render_template("user/warning.html", text = "There is not any avaliable courier")
+            return render_template("user/warning.html", text = "There is no avaliable courier")
         else:
             query = query[0]
         
